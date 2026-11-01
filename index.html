@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#173f34" />
+<meta name="theme-color" content="#0e241e" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="./favicon.svg" type="image/svg+xml" />
 <title>Viridian</title>
 <meta name="description" content="Viridian personal productivity tracker with account sign-in and cloud sync." />
 <style>
@@ -14,13 +16,16 @@
 .auth-card{width:min(460px,100%);padding:28px;background:linear-gradient(155deg,rgba(28,67,55,.97),rgba(20,48,40,.99));border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow)}
 .auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:25px}.auth-heading{font-size:25px;letter-spacing:-.04em;margin:0 0 7px}.auth-copy{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 22px}.auth-form{display:grid;gap:14px}.auth-form .field input{min-height:46px}.auth-submit{width:100%;margin-top:4px}.auth-switch{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px;color:var(--muted);font-size:12px}.auth-switch button{background:none;border:0;color:var(--mint);font-weight:750;padding:5px}.auth-message{min-height:20px;margin:14px 0 0;color:var(--muted);font-size:12px;line-height:1.5}.auth-message.error{color:#f0b0a8}.auth-message.success{color:var(--mint)}.auth-footnote{margin-top:19px;padding-top:15px;border-top:1px solid var(--line);color:var(--muted);font-size:10px;line-height:1.6}.account-chip{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:rgba(23,55,46,.72);padding:7px 9px 7px 12px;border-radius:999px}.account-name{font-size:12px;color:var(--mint);font-weight:750;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sync-status{display:block;color:var(--muted);font-size:9px;font-weight:500;margin-top:2px}.account-chip .btn{padding:7px 10px;font-size:10px}
 @media(max-width:850px){.dashboard-grid{grid-template-columns:1fr 1fr}.hero{grid-column:1/-1;min-height:205px}.two-col{grid-template-columns:1fr}}
-@media(max-width:580px){.app{padding:17px 13px 40px}.topbar{align-items:flex-start}.brand-sub{display:none}.date-pill{display:none}.xp-pill{font-size:11px;padding:9px 11px}.nav{margin-left:-3px;margin-right:-3px}.page-head{align-items:flex-start;flex-direction:column}.page-head h1{font-size:25px}.dashboard-grid{grid-template-columns:1fr 1fr;gap:10px}.hero{grid-column:1/-1}.panel{padding:17px;border-radius:17px}.stat{min-height:150px}.stat-value{font-size:31px;margin:15px 0 4px}.category-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.settings-grid{grid-template-columns:1fr}.task-card{padding:11px}.task-detail{font-size:10px}.reward{font-size:11px}}
+@media(max-width:580px){.app{padding:17px 13px 40px}.topbar{align-items:center;flex-wrap:wrap}.top-meta{width:100%;justify-content:space-between;flex-wrap:wrap}.account-chip{min-width:0}.account-name{max-width:clamp(90px,38vw,170px)}.brand-sub{display:none}.date-pill{display:none}.xp-pill{font-size:11px;padding:9px 11px}.nav{margin-left:-3px;margin-right:-3px}.page-head{align-items:flex-start;flex-direction:column}.page-head h1{font-size:25px}.dashboard-grid{grid-template-columns:1fr 1fr;gap:10px}.hero{grid-column:1/-1}.panel{padding:17px;border-radius:17px}.stat{min-height:150px}.stat-value{font-size:31px;margin:15px 0 4px}.category-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.settings-grid{grid-template-columns:1fr}.task-card{padding:11px}.task-detail{font-size:10px}.reward{font-size:11px}}
+
+:focus-visible{outline:3px solid var(--accent2);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
 <section class="auth-screen" id="authScreen" aria-labelledby="authTitle">
   <div class="auth-card">
-    <div class="auth-brand"><div class="mark">✦</div><div><div class="brand-name">VIRIDIAN</div><div class="brand-sub">Your personal progress space</div></div></div>
+    <div class="auth-brand"><div class="mark" aria-hidden="true">✦</div><div><div class="brand-name">VIRIDIAN</div><div class="brand-sub">Your personal progress space</div></div></div>
     <h1 class="auth-heading" id="authTitle">Welcome back.</h1>
     <p class="auth-copy" id="authDescription">Sign in to open your tracker and sync your progress across devices.</p>
     <form class="auth-form" id="authForm">
@@ -36,7 +41,7 @@
 </section>
 <div class="app hide" id="appShell">
   <header class="topbar">
-    <div class="brand"><div class="mark">✦</div><div><div class="brand-name">VIRIDIAN</div><div class="brand-sub">Your personal progress space</div></div></div>
+    <div class="brand"><div class="mark" aria-hidden="true">✦</div><div><div class="brand-name">VIRIDIAN</div><div class="brand-sub">Your personal progress space</div></div></div>
     <div class="top-meta"><div class="account-chip"><div><div class="account-name" id="accountName">Account</div><span class="sync-status" id="syncStatus">Connecting…</span></div><button class="btn ghost" id="signOutBtn" type="button">Sign out</button></div><div class="date-pill" id="todayDate"></div><div class="xp-pill" id="topXP">0 XP</div></div>
   </header>
   <nav class="nav" id="nav"></nav>
