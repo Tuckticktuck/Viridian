@@ -212,6 +212,23 @@
 @media(max-width:850px){.game-two-col,.analytics-grid{grid-template-columns:1fr}.upcoming-row{grid-template-columns:74px minmax(0,1fr) auto}}
 @media(max-width:580px){.game-summary{grid-template-columns:1fr 1fr;gap:10px}.game-summary .panel:last-child{grid-column:1/-1}.achievement-grid{grid-template-columns:1fr}.analytics-bar-track{width:25px}.analytics-bars{gap:5px}.category-analytics-row{grid-template-columns:minmax(0,90px) 1fr auto}.upcoming-row{grid-template-columns:62px minmax(0,1fr);gap:8px}.upcoming-row .reward{grid-column:2}.game-two-col>.panel{padding:15px}}
 
+/* Compact view selector */
+.nav{display:flex;align-items:center;gap:10px;overflow:visible;padding:0;margin:0 0 18px}
+.nav-label{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:11px;font-weight:750;white-space:nowrap}
+.nav-label span{letter-spacing:.08em;text-transform:uppercase}
+.nav-select{width:min(320px,100%);min-height:42px;padding:9px 40px 9px 13px;border:1px solid rgba(181,217,201,.22);border-radius:12px;background:#102b22;color:var(--text);font:inherit;font-size:13px;font-weight:700;cursor:pointer;outline:none}
+.nav-select:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(64,130,109,.16)}
+.nav-select option{background:#102b22;color:var(--text)}
+@media(max-width:580px){.nav{margin:0 0 15px}.nav-label{width:100%}.nav-select{width:100%;flex:1}}
+/* Expandable upcoming section */
+.upcoming-toggle{display:flex;align-items:center;gap:10px;padding:0;border:0;background:transparent;color:var(--text);text-align:left}
+.upcoming-toggle strong{display:block;font-size:17px;letter-spacing:-.02em}
+.upcoming-toggle small{display:block;margin-top:4px;color:var(--muted);font-size:12px;font-weight:400}
+.upcoming-chevron{width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--line);border-radius:9px;background:rgba(101,165,141,.1);color:var(--mint);font-size:17px;transition:transform .18s ease}
+.upcoming-toggle[aria-expanded="false"] .upcoming-chevron{transform:rotate(-90deg)}
+#upcomingPanel{display:block}
+#upcomingPanel.hide{display:none}
+@media(prefers-reduced-motion:reduce){.upcoming-chevron{transition:none}}
 </style>
 </head>
 <body>
@@ -250,8 +267,8 @@
       <div class="section-row" data-widget="today"><div><h2>Today’s tasks</h2><div class="sub" id="todaySummary">Your scheduled tasks for today</div></div><button class="btn" data-go="create">+ New task</button></div>
       <div class="panel" data-widget="today"><div class="today-list" id="todayTasks"></div></div>
 
-      <div class="section-row" data-widget="upcoming"><div><h2>Coming up</h2><div class="sub">Your next seven days</div></div><button class="btn ghost" data-go="calendar">Open calendar</button></div>
-      <div class="panel" data-widget="upcoming"><div class="upcoming-list" id="upcomingTasks"></div></div>
+      <div class="section-row upcoming-section" data-widget="upcoming"><div><button class="upcoming-toggle" id="upcomingToggle" type="button" aria-expanded="true" aria-controls="upcomingPanel"><span class="upcoming-chevron">⌄</span><span><strong>Coming up</strong><small>Your next seven days</small></span></button></div><button class="btn ghost" data-go="calendar">Open calendar</button></div>
+      <div class="panel" data-widget="upcoming" id="upcomingPanel"><div class="upcoming-list" id="upcomingTasks"></div></div>
       <div class="section-row" data-widget="analytics"><div><h2>Progress analytics</h2><div class="sub">Your recent activity and category momentum</div></div><button class="btn ghost" data-go="rewards">Achievements & goals</button></div>
       <div class="grid analytics-grid" data-widget="analytics">
         <div class="panel"><div class="analytics-heading"><strong>XP earned · last 7 days</strong><span class="hint">Including today</span></div><div class="analytics-bars" id="weeklyXPChart"></div></div>
@@ -491,8 +508,8 @@
   let currentCategory = 'school';
   let toastTimer;
 
-  function blankState(){return {tasks:[],completions:{},reviews:{},calendarGoalPercent:80,theme:'viridian',dashboardWidgets:['today','upcoming','analytics','areas'],milestones:[],monthlyChallenges:[],questChains:[],customRewards:[],purchases:[],questGoldEarned:0,notifications:{enabled:false,time:'18:00',lastSentDate:''}}}
-  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();const base=blankState();const allowedGoals=[50,60,70,75,80,85,90,100];const goal=Number(parsed.calendarGoalPercent);const themes=Object.keys(THEME_PALETTES);return {...base,...parsed,tasks:parsed.tasks,completions:parsed.completions,reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{},calendarGoalPercent:allowedGoals.includes(goal)?goal:80,theme:themes.includes(parsed.theme)?parsed.theme:'viridian',dashboardWidgets:Array.isArray(parsed.dashboardWidgets)?parsed.dashboardWidgets.filter(id=>DASHBOARD_WIDGET_IDS.includes(id)):base.dashboardWidgets,milestones:Array.isArray(parsed.milestones)?parsed.milestones:[],monthlyChallenges:Array.isArray(parsed.monthlyChallenges)?parsed.monthlyChallenges:[],questChains:Array.isArray(parsed.questChains)?parsed.questChains:[],customRewards:Array.isArray(parsed.customRewards)?parsed.customRewards:[],purchases:Array.isArray(parsed.purchases)?parsed.purchases:[],questGoldEarned:Number.isFinite(Number(parsed.questGoldEarned))?Math.max(0,Number(parsed.questGoldEarned)):0,notifications:{...base.notifications,...(parsed.notifications&&typeof parsed.notifications==='object'?parsed.notifications:{})}}}
+  function blankState(){return {tasks:[],completions:{},reviews:{},calendarGoalPercent:80,theme:'viridian',dashboardWidgets:['today','upcoming','analytics','areas'],upcomingCollapsed:false,milestones:[],monthlyChallenges:[],questChains:[],customRewards:[],purchases:[],questGoldEarned:0,notifications:{enabled:false,time:'18:00',lastSentDate:''}}}
+  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();const base=blankState();const allowedGoals=[50,60,70,75,80,85,90,100];const goal=Number(parsed.calendarGoalPercent);const themes=Object.keys(THEME_PALETTES);return {...base,...parsed,tasks:parsed.tasks,completions:parsed.completions,reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{},calendarGoalPercent:allowedGoals.includes(goal)?goal:80,theme:themes.includes(parsed.theme)?parsed.theme:'viridian',dashboardWidgets:Array.isArray(parsed.dashboardWidgets)?parsed.dashboardWidgets.filter(id=>DASHBOARD_WIDGET_IDS.includes(id)):base.dashboardWidgets,milestones:Array.isArray(parsed.milestones)?parsed.milestones:[],monthlyChallenges:Array.isArray(parsed.monthlyChallenges)?parsed.monthlyChallenges:[],questChains:Array.isArray(parsed.questChains)?parsed.questChains:[],customRewards:Array.isArray(parsed.customRewards)?parsed.customRewards:[],purchases:Array.isArray(parsed.purchases)?parsed.purchases:[],questGoldEarned:Number.isFinite(Number(parsed.questGoldEarned))?Math.max(0,Number(parsed.questGoldEarned)):0,notifications:{...base.notifications,...(parsed.notifications&&typeof parsed.notifications==='object'?parsed.notifications:{})},upcomingCollapsed:parsed.upcomingCollapsed===true}}
   function readLocalState(key){try{const raw=localStorage.getItem(key);if(!raw)return null;return normalizeState(JSON.parse(raw))}catch(e){return null}}
   function localUserKey(userId){return `${STORAGE_KEY}::${userId}`}
   function cacheCurrentState(){try{const key=authUser?localUserKey(authUser.id):STORAGE_KEY;localStorage.setItem(key,JSON.stringify(state))}catch(e){notify('The browser cache is full. Export a backup from Settings.')}}
@@ -622,9 +639,9 @@
   function taskStreak(task){const today=localDate();const todayScheduled=isScheduled(task,today);let cursor=today;if(todayScheduled&&!state.completions[occurrenceKey(task.id,today)])cursor=addDays(cursor,-1);let count=0;const start=task.repeat==='once'?task.oneDate:task.startDate;if(!start)return 0;for(let guard=0;guard<4000&&cursor>=start;guard++,cursor=addDays(cursor,-1)){if(isScheduled(task,cursor)){if(state.completions[occurrenceKey(task.id,cursor)])count++;else break}}return count}
   function overallStreak(){const today=localDate();let cursor=today;const completedToday=Object.keys(state.completions).some(k=>k.endsWith(`__${today}`));if(!completedToday)cursor=addDays(cursor,-1);let count=0;for(let i=0;i<4000;i++){const has=Object.keys(state.completions).some(k=>k.endsWith(`__${cursor}`));if(!has)break;count++;cursor=addDays(cursor,-1)}return count}
   function notify(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2300)}
-  function setPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));const pageEl=document.getElementById(`page-${page}`);if(pageEl)pageEl.classList.add('active');const navBtn=document.querySelector(`[data-page="${page}"]`);if(navBtn)navBtn.classList.add('active');if(page==='category'){const activeCat=document.querySelector(`[data-cat=\"${currentCategory}\"]`);if(activeCat){document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));activeCat.classList.add('active')}}window.scrollTo({top:0,behavior:'smooth'});if(page==='dashboard')renderDashboard();if(page==='category')renderCategory();if(page==='history')renderHistory();if(page==='weekly')renderWeeklyReview();if(page==='calendar')renderCalendar();if(page==='rewards')renderGamePage();if(page==='settings')renderSettingsEnhancements()}
+  function setPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const pageEl=document.getElementById(`page-${page}`);if(pageEl)pageEl.classList.add('active');const selector=document.getElementById('pageSelect');if(selector)selector.value=page==='category'?`cat:${currentCategory}`:page;window.scrollTo({top:0,behavior:'smooth'});if(page==='dashboard')renderDashboard();if(page==='category')renderCategory();if(page==='history')renderHistory();if(page==='weekly')renderWeeklyReview();if(page==='calendar')renderCalendar();if(page==='rewards')renderGamePage();if(page==='settings')renderSettingsEnhancements()}
   function setCategory(id){currentCategory=id;setPage('category')}
-  function buildNav(){const nav=document.getElementById('nav');const buttons=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.short]),['create','+ Create task'],['history','History'],['calendar','Calendar'],['weekly','Weekly review'],['rewards','Rewards & goals'],['settings','Settings']];nav.innerHTML=buttons.map(([id,label])=>`<button type="button" data-page="${id.startsWith('cat:')?'category':id}" data-cat="${id.startsWith('cat:')?id.slice(4):''}">${label}</button>`).join('');nav.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.cat){setCategory(b.dataset.cat);return}setPage(b.dataset.page)})}
+  function buildNav(){const nav=document.getElementById('nav');const options=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.name]),['create','Create task'],['history','History'],['calendar','Calendar'],['weekly','Weekly review'],['rewards','Rewards & goals'],['settings','Settings']];nav.innerHTML=`<label class="nav-label" for="pageSelect"><span>View</span><select id="pageSelect" class="nav-select" aria-label="Choose a Viridian page">${options.map(([id,label])=>`<option value="${id}">${label}</option>`).join('')}</select></label>`;nav.querySelector('#pageSelect').addEventListener('change',event=>{const value=event.target.value;if(value.startsWith('cat:'))setCategory(value.slice(4));else setPage(value)})}
   function updateTop(){document.getElementById('todayDate').textContent=dateLabel();document.getElementById('topXP').textContent=`${xpTotal().toLocaleString()} XP`}
   function taskCard(t){const completed=!!t.completion;const streak= t.repeat==='once'?null:taskStreak(t);const status=t.date<localDate()&&!completed?'Expired':completed?'Completed':'Due today';return `<div class="task-card"><button class="check-btn ${completed?'done':''}" data-toggle="${t.id}" ${t.date!==localDate()?'disabled':''} aria-label="${completed?'Undo completion':'Mark complete'}">${completed?'✓':'○'}</button><div class="task-main"><div class="task-title">${escapeHTML(t.name)}</div><div class="task-detail"><span>${cat(t.category).name}</span><span>·</span><span>${status}</span>${streak!==null?`<span>·</span><span>↗ ${streak} streak</span>`:''}</div></div><div class="reward">${completed?`+${t.completion.xp}`:`${t.xp}`} XP</div></div>`}
   function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -644,7 +661,9 @@
     const enabled=new Set(state.dashboardWidgets||DASHBOARD_WIDGET_IDS);
     document.querySelectorAll('[data-widget]').forEach(element=>element.classList.toggle('hide',!enabled.has(element.dataset.widget)));
     document.querySelectorAll('[data-dashboard-setting]').forEach(input=>{input.checked=enabled.has(input.dataset.dashboardSetting)});
+    applyUpcomingCollapse();
   }
+  function applyUpcomingCollapse(){const panel=document.getElementById('upcomingPanel'),button=document.getElementById('upcomingToggle');if(!panel||!button)return;const collapsed=state.upcomingCollapsed===true;panel.classList.toggle('hide',collapsed);button.setAttribute('aria-expanded',String(!collapsed));}
   function dayXP(date){return Object.entries(state.completions).reduce((sum,[key,record])=>sum+(key.endsWith('__'+date)?(Number(record.xp)||0):0),0)}
   function renderDashboardAnalytics(){
     const today=localDate(),dates=Array.from({length:7},(_,i)=>addDays(today,i-6));
@@ -854,6 +873,7 @@
   }
 
   function init(){buildNav();populateForm();
+    document.getElementById('upcomingToggle').addEventListener('click',()=>{state.upcomingCollapsed=!state.upcomingCollapsed;applyUpcomingCollapse();save()});applyUpcomingCollapse();
     document.getElementById('milestoneForm').addEventListener('submit',addMilestone);document.getElementById('challengeForm').addEventListener('submit',addMonthlyChallenge);document.getElementById('questForm').addEventListener('submit',addQuestChain);document.getElementById('customRewardForm').addEventListener('submit',addCustomReward);
     document.getElementById('milestoneType').addEventListener('change',event=>document.getElementById('milestoneCategoryField').classList.toggle('hide',event.target.value!=='category'));
     document.getElementById('themeSelect').addEventListener('change',event=>{state.theme=THEME_PALETTES[event.target.value]?event.target.value:'viridian';applyTheme(state.theme);save()});
