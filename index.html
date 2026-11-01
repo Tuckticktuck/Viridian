@@ -73,6 +73,74 @@
   .week-layout .panel{padding:16px}
 }
 
+
+/* Monthly calendar */
+.calendar-controls{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;margin-bottom:14px}
+.calendar-month-heading{display:flex;justify-content:center;align-items:center;gap:12px;min-width:0}
+.calendar-month-heading strong{font-size:17px;white-space:nowrap}
+.calendar-month-heading .btn{padding:7px 10px;font-size:11px}
+.calendar-panel{padding:18px}
+.calendar-legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:16px;color:var(--muted);font-size:11px}
+.calendar-legend span{display:inline-flex;align-items:center;gap:6px}
+.calendar-dot{display:inline-block;width:9px;height:9px;border-radius:50%}
+.calendar-dot.green{background:#63b38b}.calendar-dot.red{background:#d87878}.calendar-dot.amber{background:#d9b75e}.calendar-dot.neutral{background:#82948b}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.calendar-weekdays{margin-bottom:7px;text-align:center;color:var(--muted);font-size:11px;font-weight:750}
+.calendar-day{position:relative;min-width:0;min-height:92px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:9px;border:1px solid var(--line);border-radius:12px;background:rgba(17,43,35,.55);color:var(--text);text-align:left;overflow:hidden}
+.calendar-day:hover{border-color:rgba(181,217,201,.42);filter:brightness(1.08)}
+.calendar-day .day-number{font-size:13px;font-weight:800}
+.calendar-day .day-count{font-size:10px;color:var(--muted);line-height:1.3}
+.calendar-day .day-percent{font-size:11px;font-weight:800;margin-top:auto}
+.calendar-day .day-bar{height:4px;width:100%;border-radius:99px;background:rgba(0,0,0,.2);overflow:hidden}
+.calendar-day .day-bar span{display:block;height:100%;border-radius:inherit;background:currentColor}
+.calendar-day.day-on-target{background:rgba(46,123,86,.23);border-color:rgba(99,179,139,.45);color:#b8e8cc}
+.calendar-day.day-below-target{background:rgba(153,62,62,.22);border-color:rgba(216,120,120,.42);color:#f1b5b5}
+.calendar-day.day-in-progress{background:rgba(160,126,48,.17);border-color:rgba(217,183,94,.42);color:#f0d995}
+.calendar-day.day-neutral{color:var(--text)}
+.calendar-day.day-future{background:rgba(255,255,255,.025)}
+.calendar-day.is-selected{outline:2px solid var(--accent2);outline-offset:1px}
+.calendar-day.is-today .day-number:after{content:" · today";font-size:9px;color:var(--mint);font-weight:600}
+.calendar-day-empty{min-height:92px}
+.calendar-goal-panel{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px}
+.calendar-goal-panel strong{font-size:13px}
+.calendar-goal-panel .hint{margin:5px 0 0}
+.calendar-goal-select{display:grid;gap:6px;min-width:150px;color:var(--muted);font-size:11px;font-weight:700}
+.calendar-goal-select select{width:100%;border:1px solid rgba(181,217,201,.2);border-radius:10px;background:#102b22;color:var(--text);padding:10px 12px}
+.calendar-details{margin-top:14px}
+.calendar-task{display:flex;align-items:center;gap:12px;padding:12px 13px;border:1px solid var(--line);background:rgba(17,43,35,.55);border-radius:13px;min-width:0}
+.calendar-task-main{flex:1;min-width:0}
+.calendar-task-title{font-size:12px;font-weight:750;overflow-wrap:anywhere}
+.calendar-task-meta{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5}
+.calendar-task-status{font-size:10px;font-weight:750;border-radius:999px;padding:5px 8px;white-space:nowrap}
+.calendar-task-status.done{background:rgba(101,165,141,.16);color:var(--mint)}
+.calendar-task-status.missed{background:rgba(228,154,146,.12);color:#efb0a8}
+.calendar-task-status.pending{background:rgba(231,199,127,.11);color:var(--gold)}
+.calendar-task-status.upcoming{background:rgba(255,255,255,.06);color:var(--muted)}
+@media(max-width:850px){
+  .calendar-day{min-height:78px;padding:7px}
+  .calendar-day .day-percent{font-size:10px}
+  .calendar-panel{padding:14px}
+  .calendar-grid{gap:5px}
+}
+@media(max-width:580px){
+  .calendar-controls{grid-template-columns:1fr 1fr;gap:9px}
+  .calendar-month-heading{grid-column:1/-1;grid-row:1;justify-content:space-between}
+  #calendarPrevious{grid-column:1;grid-row:2}
+  #calendarNext{grid-column:2;grid-row:2}
+  .calendar-controls .btn{padding:9px 10px;font-size:11px}
+  .calendar-legend{gap:8px 11px;font-size:10px}
+  .calendar-day{min-height:68px;padding:6px;border-radius:9px;gap:4px}
+  .calendar-day .day-number{font-size:11px}
+  .calendar-day .day-count{font-size:8px}
+  .calendar-day .day-percent{font-size:9px}
+  .calendar-day .day-bar{height:3px}
+  .calendar-day.is-today .day-number:after{content:""}
+  .calendar-goal-panel{align-items:stretch;flex-direction:column}
+  .calendar-goal-select{min-width:0;max-width:180px}
+  .calendar-task{gap:8px;padding:10px}
+  .calendar-task-status{font-size:9px;padding:5px 6px}
+}
+
 </style>
 </head>
 <body>
@@ -147,6 +215,37 @@
     </section>
 
     
+    
+    <section class="page" id="page-calendar">
+      <div class="page-head"><div><div class="eyebrow">Your schedule at a glance</div><h1>Calendar</h1><p>See your planned tasks and how each day is going.</p></div></div>
+      <div class="panel calendar-controls">
+        <button class="btn ghost" id="calendarPrevious" type="button" aria-label="Previous month">← Previous</button>
+        <div class="calendar-month-heading"><strong id="calendarMonthLabel">Month year</strong><button class="btn ghost" id="calendarToday" type="button">Today</button></div>
+        <button class="btn ghost" id="calendarNext" type="button" aria-label="Next month">Next →</button>
+      </div>
+      <div class="panel calendar-panel">
+        <div class="calendar-legend">
+          <span><i class="calendar-dot green"></i> On target</span>
+          <span><i class="calendar-dot red"></i> Below target</span>
+          <span><i class="calendar-dot amber"></i> Today in progress</span>
+          <span><i class="calendar-dot neutral"></i> No tasks / upcoming</span>
+        </div>
+        <div class="calendar-grid calendar-weekdays" aria-hidden="true">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div class="calendar-grid" id="calendarGrid" aria-label="Monthly calendar"></div>
+      </div>
+      <div class="panel calendar-goal-panel">
+        <div><strong>Green day target</strong><p class="hint">A day turns green when you complete at least this percentage of its scheduled tasks. Past days below the target turn red.</p></div>
+        <label class="calendar-goal-select" for="calendarGoalPercent"><span>Completion target</span><select id="calendarGoalPercent"><option value="50">50%</option><option value="60">60%</option><option value="70">70%</option><option value="75">75%</option><option value="80">80%</option><option value="85">85%</option><option value="90">90%</option><option value="100">100%</option></select></label>
+      </div>
+      <div class="panel calendar-details">
+        <div class="section-row" style="margin-top:0"><div><h2 id="calendarSelectedTitle">Today</h2><div class="sub" id="calendarSelectedSummary">Your tasks for this date</div></div></div>
+        <div class="task-list" id="calendarSelectedTasks"></div>
+      </div>
+      <div class="footer-note">Calendar colors are based on the tasks currently scheduled for each date. A day with no scheduled tasks stays neutral.</div>
+    </section>
+
     <section class="page" id="page-weekly">
       <div class="page-head"><div><div class="eyebrow">Pause, reflect, reset</div><h1>Weekly review</h1><p>Notice what you accomplished and choose one useful focus for the week ahead.</p></div></div>
       <div class="panel week-toolbar">
@@ -223,8 +322,8 @@
   let currentCategory = 'school';
   let toastTimer;
 
-  function blankState(){return {tasks:[],completions:{},reviews:{}}}
-  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();return {tasks:parsed.tasks,completions:parsed.completions,reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{}}}
+  function blankState(){return {tasks:[],completions:{},reviews:{},calendarGoalPercent:80}}
+  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();const allowedGoals=[50,60,70,75,80,85,90,100];const goal=Number(parsed.calendarGoalPercent);return {tasks:parsed.tasks,completions:parsed.completions,reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{},calendarGoalPercent:allowedGoals.includes(goal)?goal:80}}
   function readLocalState(key){try{const raw=localStorage.getItem(key);if(!raw)return null;return normalizeState(JSON.parse(raw))}catch(e){return null}}
   function localUserKey(userId){return `${STORAGE_KEY}::${userId}`}
   function cacheCurrentState(){try{const key=authUser?localUserKey(authUser.id):STORAGE_KEY;localStorage.setItem(key,JSON.stringify(state))}catch(e){notify('The browser cache is full. Export a backup from Settings.')}}
@@ -256,13 +355,74 @@
   function occurrenceKey(taskId,date){return `${taskId}__${date}`}
   function isScheduled(task,date){if(task.repeat==='once')return task.oneDate===date;if(date<task.startDate)return false;const dow=parseDate(date).getDay();if(task.repeat==='daily')return true;if(task.repeat==='weekdays')return dow>=1&&dow<=5;if(task.repeat==='weekends')return dow===0||dow===6;if(task.repeat==='custom')return (task.days||[]).includes(dow);return false}
   function scheduledDates(task,from,to){const dates=[];if(!task.startDate&&!task.oneDate)return dates;let start=task.repeat==='once'?task.oneDate:task.startDate;if(!start)return dates;if(start<from)start=from;for(let d=start;d<=to;d=addDays(d,1)){if(isScheduled(task,d))dates.push(d)}return dates}
+  
+  let calendarMonth=localDate().slice(0,7);
+  let selectedCalendarDate=localDate();
+  function monthDate(year,month,day=1){return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`}
+  function changeCalendarMonth(offset){const [year,month]=calendarMonth.split('-').map(Number);const date=new Date(year,month-1+offset,1,12);calendarMonth=monthDate(date.getFullYear(),date.getMonth()+1);selectedCalendarDate=monthDate(date.getFullYear(),date.getMonth()+1,1);renderCalendar()}
+  function calendarDayData(date){
+    const tasks=state.tasks.filter(task=>isScheduled(task,date)).map(task=>({task,completion:state.completions[occurrenceKey(task.id,date)]||null}));
+    const completed=tasks.filter(item=>item.completion).length;
+    const total=tasks.length;
+    const percent=total?Math.round(completed/total*100):null;
+    const target=Number(state.calendarGoalPercent)||80;
+    let status='neutral';
+    if(total){
+      if(percent>=target)status='on-target';
+      else if(date<localDate())status='below-target';
+      else if(date===localDate())status='in-progress';
+      else status='future';
+    }
+    return {tasks,completed,total,percent,status,target};
+  }
+  function renderCalendar(){
+    const [year,month]=calendarMonth.split('-').map(Number);
+    const firstDay=new Date(year,month-1,1,12).getDay();
+    const daysInMonth=new Date(year,month,0).getDate();
+    const title=new Date(year,month-1,1,12).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+    document.getElementById('calendarMonthLabel').textContent=title;
+    const cells=[];
+    for(let i=0;i<firstDay;i++)cells.push('<div class="calendar-day-empty" aria-hidden="true"></div>');
+    for(let day=1;day<=daysInMonth;day++){
+      const date=monthDate(year,month,day);
+      const data=calendarDayData(date);
+      const classes=['calendar-day',`day-${data.status}`];
+      if(date===selectedCalendarDate)classes.push('is-selected');
+      if(date===localDate())classes.push('is-today');
+      const countText=data.total?`${data.completed}/${data.total} tasks`:'No tasks';
+      const percentText=data.total?`${data.percent}%`:'—';
+      const bar=data.total?`<div class="day-bar"><span style="width:${data.percent}%"></span></div>`:'';
+      let statusLabel=data.status==='on-target'?'On target':data.status==='below-target'?'Below target':data.status==='in-progress'?'In progress':data.status==='future'?'Upcoming':'No tasks scheduled';
+      cells.push(`<button type="button" class="${classes.join(' ')}" data-calendar-date="${date}" aria-pressed="${date===selectedCalendarDate}" aria-label="${prettyDate(date)}: ${countText}, ${percentText}, ${statusLabel}"><span class="day-number">${day}</span><span class="day-count">${countText}</span><span class="day-percent">${percentText}</span>${bar}</button>`);
+    }
+    document.getElementById('calendarGrid').innerHTML=cells.join('');
+    document.getElementById('calendarGrid').querySelectorAll('[data-calendar-date]').forEach(button=>button.addEventListener('click',()=>{selectedCalendarDate=button.dataset.calendarDate;renderCalendar()}));
+    document.getElementById('calendarGoalPercent').value=String(Number(state.calendarGoalPercent)||80);
+    const selected=calendarDayData(selectedCalendarDate);
+    document.getElementById('calendarSelectedTitle').textContent=new Date(selectedCalendarDate+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    const summary=selected.total?`${selected.completed} of ${selected.total} tasks completed · ${selected.percent}% (target ${selected.target}%)`:'No tasks are scheduled for this day.';
+    document.getElementById('calendarSelectedSummary').textContent=summary;
+    const list=document.getElementById('calendarSelectedTasks');
+    if(!selected.tasks.length){list.innerHTML='<div class="empty">Nothing is scheduled for this date.</div>';return}
+    list.innerHTML=selected.tasks.map(({task,completion})=>{
+      const isToday=selectedCalendarDate===localDate();
+      const isPast=selectedCalendarDate<localDate();
+      const isFuture=selectedCalendarDate>localDate();
+      const status=completion?'Completed':isPast?'Not completed':isFuture?'Upcoming':'Due today';
+      const statusClass=completion?'done':isPast?'missed':isFuture?'upcoming':'pending';
+      const toggle=isToday?`<button class="check-btn ${completion?'done':''}" data-toggle="${task.id}" data-date="${selectedCalendarDate}" aria-label="${completion?'Undo completion':'Mark complete'}">${completion?'✓':'○'}</button>`:'';
+      return `<div class="calendar-task">${toggle}<div class="calendar-task-main"><div class="calendar-task-title">${escapeHTML(task.name)}</div><div class="calendar-task-meta">${escapeHTML(cat(task.category).name)} · ${task.repeat==='once'?'One-time task':'Recurring task'}</div></div><span class="calendar-task-status ${statusClass}">${status}</span><span class="reward">${completion?`+${completion.xp}`:task.xp} XP</span></div>`;
+    }).join('');
+    bindToggles(list);
+  }
+
   function todayTasks(){const today=localDate();return state.tasks.filter(t=>isScheduled(t,today)).map(t=>({...t,key:occurrenceKey(t.id,today),date:today,completion:state.completions[occurrenceKey(t.id,today)]||null}))}
   function taskStreak(task){const today=localDate();const todayScheduled=isScheduled(task,today);let cursor=today;if(todayScheduled&&!state.completions[occurrenceKey(task.id,today)])cursor=addDays(cursor,-1);let count=0;const start=task.repeat==='once'?task.oneDate:task.startDate;if(!start)return 0;for(let guard=0;guard<4000&&cursor>=start;guard++,cursor=addDays(cursor,-1)){if(isScheduled(task,cursor)){if(state.completions[occurrenceKey(task.id,cursor)])count++;else break}}return count}
   function overallStreak(){const today=localDate();let cursor=today;const completedToday=Object.keys(state.completions).some(k=>k.endsWith(`__${today}`));if(!completedToday)cursor=addDays(cursor,-1);let count=0;for(let i=0;i<4000;i++){const has=Object.keys(state.completions).some(k=>k.endsWith(`__${cursor}`));if(!has)break;count++;cursor=addDays(cursor,-1)}return count}
   function notify(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2300)}
-  function setPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));const pageEl=document.getElementById(`page-${page}`);if(pageEl)pageEl.classList.add('active');const navBtn=document.querySelector(`[data-page="${page}"]`);if(navBtn)navBtn.classList.add('active');if(page==='category'){const activeCat=document.querySelector(`[data-cat=\"${currentCategory}\"]`);if(activeCat){document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));activeCat.classList.add('active')}}window.scrollTo({top:0,behavior:'smooth'});if(page==='dashboard')renderDashboard();if(page==='category')renderCategory();if(page==='history')renderHistory();if(page==='weekly')renderWeeklyReview()}
+  function setPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));const pageEl=document.getElementById(`page-${page}`);if(pageEl)pageEl.classList.add('active');const navBtn=document.querySelector(`[data-page="${page}"]`);if(navBtn)navBtn.classList.add('active');if(page==='category'){const activeCat=document.querySelector(`[data-cat=\"${currentCategory}\"]`);if(activeCat){document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));activeCat.classList.add('active')}}window.scrollTo({top:0,behavior:'smooth'});if(page==='dashboard')renderDashboard();if(page==='category')renderCategory();if(page==='history')renderHistory();if(page==='weekly')renderWeeklyReview();if(page==='calendar')renderCalendar()}
   function setCategory(id){currentCategory=id;setPage('category')}
-  function buildNav(){const nav=document.getElementById('nav');const buttons=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.short]),['create','+ Create task'],['history','History'],['weekly','Weekly review'],['settings','Settings']];nav.innerHTML=buttons.map(([id,label])=>`<button type="button" data-page="${id.startsWith('cat:')?'category':id}" data-cat="${id.startsWith('cat:')?id.slice(4):''}">${label}</button>`).join('');nav.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.cat){setCategory(b.dataset.cat);return}setPage(b.dataset.page)})}
+  function buildNav(){const nav=document.getElementById('nav');const buttons=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.short]),['create','+ Create task'],['history','History'],['calendar','Calendar'],['weekly','Weekly review'],['settings','Settings']];nav.innerHTML=buttons.map(([id,label])=>`<button type="button" data-page="${id.startsWith('cat:')?'category':id}" data-cat="${id.startsWith('cat:')?id.slice(4):''}">${label}</button>`).join('');nav.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.cat){setCategory(b.dataset.cat);return}setPage(b.dataset.page)})}
   function updateTop(){document.getElementById('todayDate').textContent=dateLabel();document.getElementById('topXP').textContent=`${xpTotal().toLocaleString()} XP`}
   function taskCard(t){const completed=!!t.completion;const streak= t.repeat==='once'?null:taskStreak(t);const status=t.date<localDate()&&!completed?'Expired':completed?'Completed':'Due today';return `<div class="task-card"><button class="check-btn ${completed?'done':''}" data-toggle="${t.id}" ${t.date!==localDate()?'disabled':''} aria-label="${completed?'Undo completion':'Mark complete'}">${completed?'✓':'○'}</button><div class="task-main"><div class="task-title">${escapeHTML(t.name)}</div><div class="task-detail"><span>${cat(t.category).name}</span><span>·</span><span>${status}</span>${streak!==null?`<span>·</span><span>↗ ${streak} streak</span>`:''}</div></div><div class="reward">${completed?`+${t.completion.xp}`:`${t.xp}`} XP</div></div>`}
   function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -313,10 +473,10 @@
   function updateXPFields(){const mode=document.querySelector('input[name="xpMode"]:checked').value;const variable=mode==='variable';document.getElementById('lockedField').classList.toggle('hide',variable);document.getElementById('difficultyField').classList.toggle('hide',!variable);document.getElementById('suggestedField').classList.toggle('hide',!variable)}
   function resetTaskForm(){document.getElementById('taskForm').reset();document.getElementById('taskDate').value=localDate();document.getElementById('startDate').value=localDate();document.getElementById('suggestedXP').value=20;updateRepeatFields();updateXPFields()}
   function addTask(e){e.preventDefault();const name=document.getElementById('taskName').value.trim();const repeat=document.getElementById('repeatType').value;const mode=document.querySelector('input[name="xpMode"]:checked').value;const startDate=document.getElementById('startDate').value;const oneDate=document.getElementById('taskDate').value;const days=[...document.querySelectorAll('#dayPicks input:checked')].map(x=>Number(x.value));if(!name){notify('Add a task name first');return}if(repeat==='once'&&!oneDate){notify('Choose a task date');return}if(repeat!=='once'&&!startDate){notify('Choose a start date');return}if(repeat==='custom'&&!days.length){notify('Choose at least one day');return}const xp=mode==='locked'?Number(document.getElementById('lockedXP').value):Number(document.getElementById('suggestedXP').value);if(!Number.isFinite(xp)||xp<1||xp>10000){notify('XP must be between 1 and 10,000');return}const task={id:`t_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,name,category:document.getElementById('taskCategory').value,repeat,mode,xp:Math.round(xp),createdOn:localDate()};if(repeat==='once')task.oneDate=oneDate;else{task.startDate=startDate;if(repeat==='custom')task.days=days}state.tasks.push(task);save();resetTaskForm();renderAll();notify('Task created');setCategory(task.category)}
-  function renderAll(){renderDashboard();if(document.getElementById('page-category').classList.contains('active'))renderCategory();if(document.getElementById('page-history').classList.contains('active'))renderHistory();if(document.getElementById('page-weekly').classList.contains('active'))renderWeeklyReview()}
+  function renderAll(){renderDashboard();if(document.getElementById('page-category').classList.contains('active'))renderCategory();if(document.getElementById('page-history').classList.contains('active'))renderHistory();if(document.getElementById('page-weekly').classList.contains('active'))renderWeeklyReview();if(document.getElementById('page-calendar').classList.contains('active'))renderCalendar()}
   function exportData(){const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),data:state},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`viridian-backup-${localDate()}.json`;a.click();URL.revokeObjectURL(url);notify('Backup exported')}
-  function importData(file){const reader=new FileReader();reader.onload=()=>{try{const obj=JSON.parse(reader.result);const data=obj.data||obj;if(!Array.isArray(data.tasks)||typeof data.completions!=='object')throw new Error('Invalid backup');if(!confirm('Import this backup and replace the current tracker data?'))return;state={tasks:data.tasks,completions:data.completions||{},reviews:data.reviews&&typeof data.reviews==='object'&&!Array.isArray(data.reviews)?data.reviews:{}};save();renderAll();notify('Backup imported')}catch(e){notify('That backup file could not be read')}};reader.readAsText(file)}
-  function init(){buildNav();populateForm();document.getElementById('previousReviewWeek').addEventListener('click',()=>{reviewWeekOffset--;renderWeeklyReview()});document.getElementById('nextReviewWeek').addEventListener('click',()=>{if(reviewWeekOffset<0){reviewWeekOffset++;renderWeeklyReview()}});document.getElementById('taskForm').addEventListener('submit',addTask);document.getElementById('repeatType').addEventListener('change',updateRepeatFields);document.querySelectorAll('input[name="xpMode"]').forEach(r=>r.addEventListener('change',updateXPFields));document.getElementById('difficulty').addEventListener('change',e=>document.getElementById('suggestedXP').value=difficultyXP[Number(e.target.value)]);document.getElementById('resetForm').addEventListener('click',()=>setTimeout(resetTaskForm,0));document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.go)));document.getElementById('exportBtn').addEventListener('click',exportData);document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('importFile').click());document.getElementById('importFile').addEventListener('change',e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value=''});document.getElementById('resetAllBtn').addEventListener('click',()=>{if(confirm('This permanently clears all tasks, completions, and XP in this browser. Have you exported a backup if you need one?')&&confirm('Are you completely sure you want to reset the tracker?')){state=blankState();save();renderAll();renderHistory();notify('Tracker reset')}});renderAll();initializeAuth();}
+  function importData(file){const reader=new FileReader();reader.onload=()=>{try{const obj=JSON.parse(reader.result);const data=obj.data||obj;if(!Array.isArray(data.tasks)||typeof data.completions!=='object')throw new Error('Invalid backup');if(!confirm('Import this backup and replace the current tracker data?'))return;state={tasks:data.tasks,completions:data.completions||{},reviews:data.reviews&&typeof data.reviews==='object'&&!Array.isArray(data.reviews)?data.reviews:{},calendarGoalPercent:[50,60,70,75,80,85,90,100].includes(Number(data.calendarGoalPercent))?Number(data.calendarGoalPercent):80};save();renderAll();notify('Backup imported')}catch(e){notify('That backup file could not be read')}};reader.readAsText(file)}
+  function init(){buildNav();populateForm();document.getElementById('calendarPrevious').addEventListener('click',()=>changeCalendarMonth(-1));document.getElementById('calendarNext').addEventListener('click',()=>changeCalendarMonth(1));document.getElementById('calendarToday').addEventListener('click',()=>{calendarMonth=localDate().slice(0,7);selectedCalendarDate=localDate();renderCalendar()});document.getElementById('calendarGoalPercent').addEventListener('change',event=>{const value=Number(event.target.value);if([50,60,70,75,80,85,90,100].includes(value)){state.calendarGoalPercent=value;save();renderCalendar()}});document.getElementById('previousReviewWeek').addEventListener('click',()=>{reviewWeekOffset--;renderWeeklyReview()});document.getElementById('nextReviewWeek').addEventListener('click',()=>{if(reviewWeekOffset<0){reviewWeekOffset++;renderWeeklyReview()}});document.getElementById('taskForm').addEventListener('submit',addTask);document.getElementById('repeatType').addEventListener('change',updateRepeatFields);document.querySelectorAll('input[name="xpMode"]').forEach(r=>r.addEventListener('change',updateXPFields));document.getElementById('difficulty').addEventListener('change',e=>document.getElementById('suggestedXP').value=difficultyXP[Number(e.target.value)]);document.getElementById('resetForm').addEventListener('click',()=>setTimeout(resetTaskForm,0));document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.go)));document.getElementById('exportBtn').addEventListener('click',exportData);document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('importFile').click());document.getElementById('importFile').addEventListener('change',e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value=''});document.getElementById('resetAllBtn').addEventListener('click',()=>{if(confirm('This permanently clears all tasks, completions, and XP in this browser. Have you exported a backup if you need one?')&&confirm('Are you completely sure you want to reset the tracker?')){state=blankState();save();renderAll();renderHistory();notify('Tracker reset')}});renderAll();initializeAuth();}
   init();
 })();
 </script>
