@@ -419,6 +419,32 @@ body{
   .btn,.check-btn,.task-card,.history-row,.category-link,.calendar-task,.upcoming-chevron,.upcoming-chevron::before,.nav-select{transition:none!important}
 }
 
+
+/* Task section manager */
+.category-manager-panel{grid-column:1/-1}
+.category-add-form{display:grid;gap:12px;padding:15px;border:1px solid var(--surface-border);border-radius:14px;background:rgba(12,35,28,.32)}
+.category-add-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.category-manager-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:14px}
+.category-manager-card{min-width:0;padding:14px;border:1px solid var(--surface-border);border-radius:14px;background:rgba(17,43,35,.48)}
+.category-manager-summary{display:flex;align-items:flex-start;gap:11px;min-width:0}
+.category-manager-icon{width:38px;height:38px;flex:0 0 auto;display:grid;place-items:center;border-radius:11px;background:rgba(101,165,141,.14);color:var(--mint);font-size:18px}
+.category-manager-copy{flex:1;min-width:0}
+.category-manager-copy strong{display:block;font-size:13px;overflow-wrap:anywhere}
+.category-manager-copy small{display:block;color:var(--muted);font-size:10px;line-height:1.5;margin-top:4px;overflow-wrap:anywhere}
+.category-manager-count{font-size:10px;color:var(--accent2);font-weight:750;white-space:nowrap}
+.category-manager-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:12px}
+.category-manager-actions .btn{padding:8px 11px;font-size:10px}
+.category-editor{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.category-editor .field.full{grid-column:1/-1}
+.category-editor-actions{display:flex;gap:8px;grid-column:1/-1;flex-wrap:wrap}
+.category-editor-actions .btn{padding:9px 12px;font-size:11px}
+.category-delete-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.category-delete-row .field{min-width:0}
+.category-delete-row .btn{padding:9px 12px;font-size:10px}
+.category-delete-row .hint{grid-column:1/-1}
+@media(max-width:850px){.category-manager-list{grid-template-columns:1fr 1fr}}
+@media(max-width:580px){.category-add-grid,.category-manager-list{grid-template-columns:1fr}.category-editor{grid-template-columns:1fr}.category-editor .field.full,.category-editor-actions{grid-column:auto}.category-delete-row{grid-template-columns:1fr auto}}
+
 </style>
 </head>
 <body>
@@ -632,6 +658,20 @@ body{
       <div class="grid settings-grid">
         <div class="panel"><h2 style="margin:0 0 8px;font-size:16px">Your data</h2><p class="muted" style="font-size:12px;line-height:1.6">Tasks and progress are saved to your signed-in Viridian account and cached in this browser. Your account data is protected by database row-level access rules.</p><div class="form-actions"><button class="btn" id="exportBtn">Export backup</button><button class="btn secondary" id="importBtn">Import backup</button><input type="file" id="importFile" accept="application/json,.json" class="hide" /></div><div class="hint" style="margin-top:12px">Export a backup occasionally. Importing a backup replaces the data currently stored in this browser.</div></div>
 
+
+        <div class="panel category-manager-panel">
+          <div class="section-row" style="margin-top:0"><div><h2>Manage task sections</h2><div class="sub">Add, rename, customize, or remove your task categories.</div></div></div>
+          <form id="categoryAddForm" class="category-add-form">
+            <div class="category-add-grid">
+              <div class="field"><label for="newCategoryName">Section name</label><input id="newCategoryName" maxlength="42" required placeholder="e.g. Reading" /></div>
+              <div class="field"><label for="newCategoryShort">Short label</label><input id="newCategoryShort" maxlength="22" placeholder="e.g. Reading" /></div>
+              <div class="field"><label for="newCategoryIcon">Icon / symbol</label><input id="newCategoryIcon" maxlength="8" value="✦" /></div>
+              <div class="field"><label for="newCategoryDescription">Description</label><input id="newCategoryDescription" maxlength="140" placeholder="What belongs in this section?" /></div>
+            </div>
+            <div class="form-actions"><button class="btn" type="submit">+ Add section</button></div>
+          </form>
+          <div class="category-manager-list" id="categoryManagerList"></div>
+        </div>
         <div class="panel"><h2 style="margin:0 0 8px;font-size:16px">Appearance</h2><p class="muted" style="font-size:12px;line-height:1.6">Choose an accent palette for your Viridian workspace. The change applies immediately and syncs with your account.</p><div class="field"><label for="themeSelect">Accent color</label><select id="themeSelect"><option value="viridian">Viridian green</option><option value="ocean">Ocean blue</option><option value="violet">Violet</option><option value="sunset">Sunset orange</option><option value="rose">Rose</option><option value="slate">Slate</option></select></div></div>
         <div class="panel"><h2 style="margin:0 0 8px;font-size:16px">Dashboard layout</h2><p class="muted" style="font-size:12px;line-height:1.6">Choose which sections appear on your dashboard.</p><div class="dashboard-toggle-list"><label><input type="checkbox" data-dashboard-setting="today" /> Today’s tasks</label><label><input type="checkbox" data-dashboard-setting="upcoming" /> Upcoming tasks</label><label><input type="checkbox" data-dashboard-setting="analytics" /> Progress analytics</label><label><input type="checkbox" data-dashboard-setting="areas" /> Your areas</label></div></div>
         <div class="panel"><h2 style="margin:0 0 8px;font-size:16px">Notifications</h2><p class="muted" style="font-size:12px;line-height:1.6">Enable browser notifications and set a daily reminder for unfinished tasks. Your browser may ask you to allow notifications.</p><div class="form-actions"><button class="btn secondary" id="enableNotificationsBtn" type="button">Enable browser notifications</button><span class="hint" id="notificationPermissionStatus" role="status">Permission not requested</span></div><label class="notification-setting"><input type="checkbox" id="dailyReminderEnabled" /> Daily reminder</label><div class="field"><label for="dailyReminderTime">Reminder time</label><input id="dailyReminderTime" type="time" value="18:00" /></div><div class="hint" id="notificationRuntimeNote">Reminders run while Viridian is open. Your browser controls notification permission.</div></div>
@@ -683,7 +723,7 @@ body{
   const DASHBOARD_WIDGET_IDS=['today','upcoming','analytics','areas'];
 
   let state = blankState();
-  const categories = [
+  const DEFAULT_CATEGORIES = [
     {id:'school',name:'School & studying',short:'School',icon:'▤',desc:'Assignments, revision, reading, and learning.'},
     {id:'fitness',name:'Fitness',short:'Fitness',icon:'◈',desc:'Movement, training, and healthy activity.'},
     {id:'routines',name:'Daily routines',short:'Routines',icon:'☼',desc:'Everyday habits and personal routines.'},
@@ -693,13 +733,28 @@ body{
     {id:'goals',name:'Long-term goals',short:'Long-term goals',icon:'⌁',desc:'Steady progress on bigger ambitions.'},
     {id:'spirituality',name:'Spirituality',short:'Spirituality',icon:'✦',desc:'Reflection and practices that matter to you.'}
   ];
+  const categories = DEFAULT_CATEGORIES.map(item=>({...item}));
   const difficultyXP = [5,10,20,35,50];
   const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   let currentCategory = 'school';
   let toastTimer;
 
-  function blankState(){return {tasks:[],completions:{},reviews:{},calendarGoalPercent:80,theme:'viridian',dashboardWidgets:['today','upcoming','analytics','areas'],upcomingCollapsed:false,milestones:[],monthlyChallenges:[],questChains:[],customRewards:[],purchases:[],questGoldEarned:0,notifications:{enabled:false,time:'18:00',lastSentDate:''}}}
-  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();const base=blankState();const allowedGoals=[50,60,70,75,80,85,90,100];const goal=Number(parsed.calendarGoalPercent);const themes=Object.keys(THEME_PALETTES);return {...base,...parsed,tasks:parsed.tasks,completions:parsed.completions,reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{},calendarGoalPercent:allowedGoals.includes(goal)?goal:80,theme:themes.includes(parsed.theme)?parsed.theme:'viridian',dashboardWidgets:Array.isArray(parsed.dashboardWidgets)?parsed.dashboardWidgets.filter(id=>DASHBOARD_WIDGET_IDS.includes(id)):base.dashboardWidgets,milestones:Array.isArray(parsed.milestones)?parsed.milestones:[],monthlyChallenges:Array.isArray(parsed.monthlyChallenges)?parsed.monthlyChallenges:[],questChains:Array.isArray(parsed.questChains)?parsed.questChains:[],customRewards:Array.isArray(parsed.customRewards)?parsed.customRewards:[],purchases:Array.isArray(parsed.purchases)?parsed.purchases:[],questGoldEarned:Number.isFinite(Number(parsed.questGoldEarned))?Math.max(0,Number(parsed.questGoldEarned)):0,notifications:{...base.notifications,...(parsed.notifications&&typeof parsed.notifications==='object'?parsed.notifications:{})},upcomingCollapsed:parsed.upcomingCollapsed===true}}
+  function blankState(){categories.splice(0,categories.length,...DEFAULT_CATEGORIES.map(item=>({...item})));return {tasks:[],completions:{},reviews:{},categories:categories.map(item=>({...item})),calendarGoalPercent:80,theme:'viridian',dashboardWidgets:['today','upcoming','analytics','areas'],upcomingCollapsed:false,milestones:[],monthlyChallenges:[],questChains:[],customRewards:[],purchases:[],questGoldEarned:0,notifications:{enabled:false,time:'18:00',lastSentDate:''}}}
+  function sanitizeCategories(input){
+    const source=Array.isArray(input)&&input.length?input:DEFAULT_CATEGORIES;
+    const seenIds=new Set(),seenNames=new Set(),result=[];
+    for(const item of source.slice(0,30)){
+      if(!item||typeof item!=='object')continue;
+      const id=String(item.id||'').trim().toLowerCase();
+      const name=String(item.name||'').trim().slice(0,42);
+      const key=name.toLocaleLowerCase();
+      if(!/^[a-z0-9_-]{1,48}$/.test(id)||!name||seenIds.has(id)||seenNames.has(key))continue;
+      seenIds.add(id);seenNames.add(key);
+      result.push({id,name,short:String(item.short||name).trim().slice(0,22)||name,icon:String(item.icon||'✦').trim().slice(0,8)||'✦',desc:String(item.desc||'').trim().slice(0,140)});
+    }
+    return result.length?result:DEFAULT_CATEGORIES.map(item=>({...item}));
+  }
+  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();const base=blankState();const allowedGoals=[50,60,70,75,80,85,90,100];const goal=Number(parsed.calendarGoalPercent);const themes=Object.keys(THEME_PALETTES);categories.splice(0,categories.length,...sanitizeCategories(parsed.categories));return {...base,...parsed,tasks:parsed.tasks,completions:parsed.completions,categories:categories.map(item=>({...item})),reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{},calendarGoalPercent:allowedGoals.includes(goal)?goal:80,theme:themes.includes(parsed.theme)?parsed.theme:'viridian',dashboardWidgets:Array.isArray(parsed.dashboardWidgets)?parsed.dashboardWidgets.filter(id=>DASHBOARD_WIDGET_IDS.includes(id)):base.dashboardWidgets,milestones:Array.isArray(parsed.milestones)?parsed.milestones:[],monthlyChallenges:Array.isArray(parsed.monthlyChallenges)?parsed.monthlyChallenges:[],questChains:Array.isArray(parsed.questChains)?parsed.questChains:[],customRewards:Array.isArray(parsed.customRewards)?parsed.customRewards:[],purchases:Array.isArray(parsed.purchases)?parsed.purchases:[],questGoldEarned:Number.isFinite(Number(parsed.questGoldEarned))?Math.max(0,Number(parsed.questGoldEarned)):0,notifications:{...base.notifications,...(parsed.notifications&&typeof parsed.notifications==='object'?parsed.notifications:{})},upcomingCollapsed:parsed.upcomingCollapsed===true}}
   function readLocalState(key){try{const raw=localStorage.getItem(key);if(!raw)return null;return normalizeState(JSON.parse(raw))}catch(e){return null}}
   function localUserKey(userId){return `${STORAGE_KEY}::${userId}`}
   function cacheCurrentState(){try{const key=authUser?localUserKey(authUser.id):STORAGE_KEY;localStorage.setItem(key,JSON.stringify(state))}catch(e){notify('The browser cache is full. Export a backup from Settings.')}}
@@ -831,7 +886,7 @@ body{
   function notify(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2300)}
   function setPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const pageEl=document.getElementById(`page-${page}`);if(pageEl)pageEl.classList.add('active');const selector=document.getElementById('pageSelect');if(selector)selector.value=page==='category'?`cat:${currentCategory}`:page;window.scrollTo({top:0,behavior:'smooth'});if(page==='dashboard')renderDashboard();if(page==='category')renderCategory();if(page==='history')renderHistory();if(page==='weekly')renderWeeklyReview();if(page==='calendar')renderCalendar();if(page==='rewards')renderGamePage();if(page==='settings')renderSettingsEnhancements()}
   function setCategory(id){currentCategory=id;setPage('category')}
-  function buildNav(){const nav=document.getElementById('nav');const options=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.name]),['create','Create task'],['history','History'],['calendar','Calendar'],['weekly','Weekly review'],['rewards','Rewards & goals'],['settings','Settings']];nav.innerHTML=`<label class="nav-label" for="pageSelect"><span>View</span><span class="nav-select-wrap"><select id="pageSelect" class="nav-select" aria-label="Choose a Viridian page">${options.map(([id,label])=>`<option value="${id}">${label}</option>`).join('')}</select><span class="nav-select-chevron" aria-hidden="true"></span></span></label>`;nav.querySelector('#pageSelect').addEventListener('change',event=>{const value=event.target.value;if(value.startsWith('cat:'))setCategory(value.slice(4));else setPage(value)})}
+  function buildNav(){const nav=document.getElementById('nav');const options=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.name]),['create','Create task'],['history','History'],['calendar','Calendar'],['weekly','Weekly review'],['rewards','Rewards & goals'],['settings','Settings']];nav.innerHTML=`<label class="nav-label" for="pageSelect"><span>View</span><span class="nav-select-wrap"><select id="pageSelect" class="nav-select" aria-label="Choose a Viridian page">${options.map(([id,label])=>`<option value="${id}">${label}</option>`).join('')}</select><span class="nav-select-chevron" aria-hidden="true"></span></span></label>`;const selector=nav.querySelector('#pageSelect');selector.value=document.querySelector('.page.active')?.id==='page-category'?`cat:${currentCategory}`:(document.querySelector('.page.active')?.id||'page-dashboard').replace('page-','');selector.onchange=event=>{const value=event.target.value;if(value.startsWith('cat:'))setCategory(value.slice(4));else setPage(value)}}
   function updateTop(){document.getElementById('todayDate').textContent=dateLabel();document.getElementById('topXP').textContent=`${xpTotal().toLocaleString()} XP`}
   function taskCard(t){const completed=!!t.completion;const streak= t.repeat==='once'?null:taskStreak(t);const status=t.date<localDate()&&!completed?'Expired':completed?'Completed':'Due today';return `<div class="task-card"><button class="check-btn ${completed?'done':''}" data-toggle="${t.id}" ${t.date!==localDate()?'disabled':''} aria-label="${completed?'Undo completion':'Mark complete'}">${completed?'✓':'○'}</button><div class="task-main"><div class="task-title">${escapeHTML(t.name)}</div><div class="task-detail"><span>${cat(t.category).name}</span><span>·</span><span>${status}</span>${streak!==null?`<span>·</span><span>↗ ${streak} streak</span>`:''}</div></div><div class="reward">${completed?`+${t.completion.xp}`:`${t.xp}`} XP</div></div>`}
   function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -933,7 +988,81 @@ body{
     state.purchases.push({id:`p_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,name:reward.name,cost:reward.cost,date:localDate(),redeemed:false});
     save();renderGamePage();notify(`Reward added to your list · -${reward.cost} gold`);
   }
+
+  function saveCategories(){state.categories=categories.map(item=>({...item}));save();populateForm();buildNav();renderAll()}
+  function renderCategoryManager(){
+    const list=document.getElementById('categoryManagerList');if(!list)return;
+    list.innerHTML=categories.map(category=>{
+      const assigned=state.tasks.filter(task=>task.category===category.id).length;
+      const targets=categories.filter(item=>item.id!==category.id);
+      const moveSelect=assigned?'<div class="field"><label>Move assigned tasks to</label><select data-move-category>'+targets.map(item=>`<option value="${item.id}">${escapeHTML(item.name)}</option>`).join('')+'</select></div>':'<div class="hint">No tasks are currently assigned here.</div>';
+      return `<article class="category-manager-card" data-category-card="${category.id}">
+        <div class="category-manager-summary">
+          <span class="category-manager-icon">${escapeHTML(category.icon)}</span>
+          <div class="category-manager-copy"><strong>${escapeHTML(category.name)}</strong><small>${escapeHTML(category.desc||'No description yet.')}</small></div>
+          <span class="category-manager-count">${assigned} ${assigned===1?'task':'tasks'}</span>
+        </div>
+        <div class="category-manager-actions"><button class="btn secondary" type="button" data-edit-category>Edit section</button></div>
+        <div class="category-editor hide">
+          <div class="field"><label>Section name</label><input data-edit-field="name" maxlength="42" value="${escapeHTML(category.name)}" /></div>
+          <div class="field"><label>Short label</label><input data-edit-field="short" maxlength="22" value="${escapeHTML(category.short)}" /></div>
+          <div class="field"><label>Icon / symbol</label><input data-edit-field="icon" maxlength="8" value="${escapeHTML(category.icon)}" /></div>
+          <div class="field"><label>Description</label><input data-edit-field="desc" maxlength="140" value="${escapeHTML(category.desc)}" /></div>
+          <div class="category-editor-actions"><button class="btn" type="button" data-save-category>Save changes</button><button class="btn ghost" type="button" data-cancel-category>Cancel</button></div>
+        </div>
+        <div class="category-delete-row">${moveSelect}<button class="btn danger" type="button" data-delete-category ${categories.length<=1?'disabled':''}>Delete</button></div>
+      </article>`;
+    }).join('');
+    list.querySelectorAll('[data-edit-category]').forEach(button=>button.addEventListener('click',()=>{const card=button.closest('[data-category-card]');card.querySelector('.category-editor').classList.remove('hide');button.closest('.category-manager-actions').classList.add('hide');card.querySelector('[data-edit-field="name"]').focus()}));
+    list.querySelectorAll('[data-cancel-category]').forEach(button=>button.addEventListener('click',()=>{const card=button.closest('[data-category-card]');card.querySelector('.category-editor').classList.add('hide');card.querySelector('.category-manager-actions').classList.remove('hide')}));
+    list.querySelectorAll('[data-save-category]').forEach(button=>button.addEventListener('click',()=>updateCategory(button.closest('[data-category-card]'))));
+    list.querySelectorAll('[data-delete-category]').forEach(button=>button.addEventListener('click',()=>deleteCategory(button.closest('[data-category-card]'))));
+  }
+  function updateCategory(card){
+    const id=card?.dataset.categoryCard,category=categories.find(item=>item.id===id);if(!category)return;
+    const read=key=>card.querySelector(`[data-edit-field="${key}"]`).value.trim();
+    const name=read('name'),short=read('short'),icon=read('icon'),desc=read('desc');
+    if(!name){notify('Section name cannot be empty');return}
+    if(categories.some(item=>item.id!==id&&item.name.toLocaleLowerCase()===name.toLocaleLowerCase())){notify('A section with that name already exists');return}
+    category.name=name.slice(0,42);category.short=(short||name).slice(0,22);category.icon=(icon||'✦').slice(0,8);category.desc=desc.slice(0,140);
+    saveCategories();notify('Task section updated');
+  }
+  function addCategory(event){
+    event.preventDefault();
+    const name=document.getElementById('newCategoryName').value.trim();
+    const short=document.getElementById('newCategoryShort').value.trim();
+    const icon=document.getElementById('newCategoryIcon').value.trim()||'✦';
+    const desc=document.getElementById('newCategoryDescription').value.trim();
+    if(!name){notify('Enter a section name');return}
+    if(categories.length>=30){notify('You can have up to 30 task sections');return}
+    if(categories.some(item=>item.name.toLocaleLowerCase()===name.toLocaleLowerCase())){notify('A section with that name already exists');return}
+    const slug=name.toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,24)||'section';
+    const id=`custom-${slug}-${Date.now().toString(36)}`;
+    categories.push({id,name:name.slice(0,42),short:(short||name).slice(0,22),icon:icon.slice(0,8),desc:desc.slice(0,140)});
+    document.getElementById('categoryAddForm').reset();document.getElementById('newCategoryIcon').value='✦';
+    saveCategories();notify('Task section added');
+  }
+  function deleteCategory(card){
+    const id=card?.dataset.categoryCard,category=categories.find(item=>item.id===id);if(!category)return;
+    if(categories.length<=1){notify('Keep at least one task section');return}
+    const affected=state.tasks.filter(task=>task.category===id);
+    const targetId=affected.length?card.querySelector('[data-move-category]')?.value:categories.find(item=>item.id!==id)?.id;
+    if(affected.length&&!categories.some(item=>item.id===targetId&&item.id!==id)){notify('Choose another section for the tasks first');return}
+    const target=categories.find(item=>item.id===targetId);
+    const message=affected.length?`Delete "${category.name}" and move ${affected.length} ${affected.length===1?'task':'tasks'} to "${target.name}"?`:`Delete "${category.name}"?`;
+    if(!confirm(message))return;
+    if(affected.length){
+      affected.forEach(task=>{task.category=targetId});
+      Object.values(state.completions).forEach(record=>{if(record.category===id)record.category=targetId});
+      (state.milestones||[]).forEach(milestone=>{if(milestone.category===id)milestone.category=targetId});
+    }
+    const index=categories.findIndex(item=>item.id===id);categories.splice(index,1);
+    if(currentCategory===id)currentCategory=targetId;
+    saveCategories();notify('Task section deleted');
+  }
+
   function renderSettingsEnhancements(){
+    renderCategoryManager();
     document.getElementById('themeSelect').value=THEME_PALETTES[state.theme]?state.theme:'viridian';
     applyTheme(state.theme);
     applyDashboardWidgets();
@@ -1023,7 +1152,7 @@ body{
   }
 
   function renderHistory(){const el=document.getElementById('historyList');const today=localDate();const from=addDays(today,-30);let rows=[];for(const t of state.tasks){const start=t.repeat==='once'?t.oneDate:t.startDate;const dates=scheduledDates(t,from,today).filter(d=>d<today);for(const d of dates){const key=occurrenceKey(t.id,d),done=state.completions[key];rows.push({task:t,date:d,done,xp:done?done.xp:null})}}for(const [key,done] of Object.entries(state.completions)){const split=key.lastIndexOf('__'),id=key.slice(0,split),date=key.slice(split+2);if(date===today){const t=state.tasks.find(x=>x.id===id);if(t)rows.push({task:t,date,done,xp:done.xp})}}rows.sort((a,b)=>b.date.localeCompare(a.date));rows=rows.slice(0,60);el.innerHTML=rows.length?rows.map(r=>`<div class="history-row"><div><div class="history-title">${escapeHTML(r.task.name)}</div><div class="history-meta">${cat(r.task.category).name} · ${prettyDate(r.date)}</div></div><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap"><span class="status ${r.done?'complete':'expired'}">${r.done?`Completed · +${r.xp} XP`:'Expired'}</span>${r.done?`<button class="btn ghost" style="padding:6px 9px;font-size:10px" data-toggle="${r.task.id}" data-date="${r.date}">Undo</button>`:''}</div></div>`).join(''):'<div class="empty">Your activity will appear here as you complete tasks.</div>';bindToggles(el)}
-  function populateForm(){document.getElementById('taskCategory').innerHTML=categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');document.getElementById('dayPicks').innerHTML=weekdays.map((d,i)=>`<label><input type="checkbox" value="${i}" ${i>=1&&i<=5?'checked':''}/>${d}</label>`).join('');const today=localDate();document.getElementById('taskDate').value=today;document.getElementById('startDate').value=today;updateRepeatFields();updateXPFields()}
+  function populateForm(){const categorySelect=document.getElementById('taskCategory'),selected=categorySelect.value;categorySelect.innerHTML=categories.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');if(categories.some(c=>c.id===selected))categorySelect.value=selected;else if(categories.some(c=>c.id===currentCategory))categorySelect.value=currentCategory;document.getElementById('dayPicks').innerHTML=weekdays.map((d,i)=>`<label><input type="checkbox" value="${i}" ${i>=1&&i<=5?'checked':''}/>${d}</label>`).join('');const today=localDate();document.getElementById('taskDate').value=today;document.getElementById('startDate').value=today;updateRepeatFields();updateXPFields()}
   function updateRepeatFields(){const repeat=document.getElementById('repeatType').value;document.getElementById('dateField').classList.toggle('hide',repeat!=='once');document.getElementById('startField').classList.toggle('hide',repeat==='once');document.getElementById('customDaysField').classList.toggle('hide',repeat!=='custom');document.getElementById('taskDate').required=repeat==='once';document.getElementById('startDate').required=repeat!=='once'}
   function updateXPFields(){const mode=document.querySelector('input[name="xpMode"]:checked').value;const variable=mode==='variable';document.getElementById('lockedField').classList.toggle('hide',variable);document.getElementById('difficultyField').classList.toggle('hide',!variable);document.getElementById('suggestedField').classList.toggle('hide',!variable)}
   function resetTaskForm(){document.getElementById('taskForm').reset();document.getElementById('taskDate').value=localDate();document.getElementById('startDate').value=localDate();document.getElementById('suggestedXP').value=20;updateRepeatFields();updateXPFields()}
@@ -1063,6 +1192,7 @@ body{
   }
 
   function init(){buildNav();populateForm();
+    document.getElementById('categoryAddForm').addEventListener('submit',addCategory);
     document.getElementById('upcomingToggle').addEventListener('click',()=>{state.upcomingCollapsed=!state.upcomingCollapsed;applyUpcomingCollapse();save()});applyUpcomingCollapse();
     document.getElementById('milestoneForm').addEventListener('submit',addMilestone);document.getElementById('challengeForm').addEventListener('submit',addMonthlyChallenge);document.getElementById('questForm').addEventListener('submit',addQuestChain);document.getElementById('customRewardForm').addEventListener('submit',addCustomReward);
     document.getElementById('milestoneType').addEventListener('change',event=>document.getElementById('milestoneCategoryField').classList.toggle('hide',event.target.value!=='category'));
