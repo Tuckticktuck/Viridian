@@ -1,0 +1,18 @@
+{
+  "name": "Viridian — Personal Progress Space",
+  "short_name": "Viridian",
+  "description": "A personal productivity tracker with tasks, goals, and progress.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e241e",
+  "theme_color": "#0e241e",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
