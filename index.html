@@ -230,6 +230,39 @@
 #upcomingPanel.hide{display:none}
 @media(prefers-reduced-motion:reduce){.upcoming-chevron{transition:none}}
 
+
+/* Consistent downward indicator for the page chooser */
+.nav-label{gap:11px}
+.nav-select-wrap{position:relative;display:block;width:min(340px,100%);min-width:0}
+.nav-select-wrap .nav-select{
+  display:block;
+  width:100%;
+  padding-right:48px;
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:none!important;
+}
+.nav-select-wrap .nav-select::-ms-expand{display:none}
+.nav-select-chevron{
+  position:absolute;
+  top:50%;
+  right:17px;
+  width:9px;
+  height:9px;
+  margin-top:-6px;
+  border-right:2px solid var(--mint);
+  border-bottom:2px solid var(--mint);
+  border-radius:1px;
+  transform:rotate(45deg);
+  pointer-events:none;
+  transition:transform .18s ease,margin-top .18s ease;
+}
+.nav-select-wrap:focus-within .nav-select-chevron{margin-top:-3px}
+@media(max-width:580px){
+  .nav-select-wrap{width:100%;flex:1}
+}
+@media(prefers-reduced-motion:reduce){.nav-select-chevron{transition:none}}
+
 /* Viridian UI refinement pass */
 :root{
   --surface-border:rgba(211,235,222,.12);
@@ -798,7 +831,7 @@ body{
   function notify(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2300)}
   function setPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const pageEl=document.getElementById(`page-${page}`);if(pageEl)pageEl.classList.add('active');const selector=document.getElementById('pageSelect');if(selector)selector.value=page==='category'?`cat:${currentCategory}`:page;window.scrollTo({top:0,behavior:'smooth'});if(page==='dashboard')renderDashboard();if(page==='category')renderCategory();if(page==='history')renderHistory();if(page==='weekly')renderWeeklyReview();if(page==='calendar')renderCalendar();if(page==='rewards')renderGamePage();if(page==='settings')renderSettingsEnhancements()}
   function setCategory(id){currentCategory=id;setPage('category')}
-  function buildNav(){const nav=document.getElementById('nav');const options=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.name]),['create','Create task'],['history','History'],['calendar','Calendar'],['weekly','Weekly review'],['rewards','Rewards & goals'],['settings','Settings']];nav.innerHTML=`<label class="nav-label" for="pageSelect"><span>View</span><select id="pageSelect" class="nav-select" aria-label="Choose a Viridian page">${options.map(([id,label])=>`<option value="${id}">${label}</option>`).join('')}</select></label>`;nav.querySelector('#pageSelect').addEventListener('change',event=>{const value=event.target.value;if(value.startsWith('cat:'))setCategory(value.slice(4));else setPage(value)})}
+  function buildNav(){const nav=document.getElementById('nav');const options=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.name]),['create','Create task'],['history','History'],['calendar','Calendar'],['weekly','Weekly review'],['rewards','Rewards & goals'],['settings','Settings']];nav.innerHTML=`<label class="nav-label" for="pageSelect"><span>View</span><span class="nav-select-wrap"><select id="pageSelect" class="nav-select" aria-label="Choose a Viridian page">${options.map(([id,label])=>`<option value="${id}">${label}</option>`).join('')}</select><span class="nav-select-chevron" aria-hidden="true"></span></span></label>`;nav.querySelector('#pageSelect').addEventListener('change',event=>{const value=event.target.value;if(value.startsWith('cat:'))setCategory(value.slice(4));else setPage(value)})}
   function updateTop(){document.getElementById('todayDate').textContent=dateLabel();document.getElementById('topXP').textContent=`${xpTotal().toLocaleString()} XP`}
   function taskCard(t){const completed=!!t.completion;const streak= t.repeat==='once'?null:taskStreak(t);const status=t.date<localDate()&&!completed?'Expired':completed?'Completed':'Due today';return `<div class="task-card"><button class="check-btn ${completed?'done':''}" data-toggle="${t.id}" ${t.date!==localDate()?'disabled':''} aria-label="${completed?'Undo completion':'Mark complete'}">${completed?'✓':'○'}</button><div class="task-main"><div class="task-title">${escapeHTML(t.name)}</div><div class="task-detail"><span>${cat(t.category).name}</span><span>·</span><span>${status}</span>${streak!==null?`<span>·</span><span>↗ ${streak} streak</span>`:''}</div></div><div class="reward">${completed?`+${t.completion.xp}`:`${t.xp}`} XP</div></div>`}
   function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
