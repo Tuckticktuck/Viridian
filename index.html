@@ -1495,7 +1495,11 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
   }
   function toggleSubtask(taskId,index,checked){
     const task=state.tasks.find(item=>item.id===taskId);if(!task||!Array.isArray(task.subtasks)||!task.subtasks[index])return;
-    task.subtasks[index].done=!!checked;task.updatedAt=new Date().toISOString();save();renderAll();
+    task.subtasks[index].done=!!checked;task.updatedAt=new Date().toISOString();
+    const controls=[...document.querySelectorAll('[data-subtask-toggle]')].filter(input=>input.dataset.subtaskToggle===taskId&&Number(input.dataset.subtaskIndex)===index);
+    controls.forEach(input=>{input.checked=!!checked;input.closest('.subtask-row')?.classList.toggle('done',!!checked)});
+    document.querySelectorAll('[data-subtask-toggle]').forEach(input=>{if(input.dataset.subtaskToggle===taskId){const rows=[...input.closest('.task-extra')?.querySelectorAll('[data-subtask-toggle]')||[]];const done=rows.filter(row=>row.checked).length;const summary=input.closest('.task-extra')?.querySelector('summary');if(summary)summary.textContent=`Checklist · ${done}/${task.subtasks.length} · Details`}});
+    save();
   }
     function deleteTask(id){
     const task=state.tasks.find(item=>item.id===id);if(!task)return;
@@ -1579,7 +1583,6 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     function populateForm(){const categorySelect=document.getElementById('taskCategory'),selected=categorySelect.value;categorySelect.innerHTML=categories.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');if(categories.some(c=>c.id===selected))categorySelect.value=selected;else if(categories.some(c=>c.id===currentCategory))categorySelect.value=currentCategory;document.getElementById('dayPicks').innerHTML=weekdays.map((d,i)=>`<label><input type="checkbox" value="${i}" ${i>=1&&i<=5?'checked':''}/>${d}</label>`).join('');const today=localDate();document.getElementById('taskDate').value=today;document.getElementById('startDate').value=today;updateRepeatFields();updateXPFields()}
   function updateRepeatFields(){const repeat=document.getElementById('repeatType').value;document.getElementById('dateField').classList.toggle('hide',repeat!=='once');document.getElementById('startField').classList.toggle('hide',repeat==='once');document.getElementById('customDaysField').classList.toggle('hide',repeat!=='custom');document.getElementById('taskDate').required=repeat==='once';document.getElementById('startDate').required=repeat!=='once'}
   function updateXPFields(){const mode=document.querySelector('input[name="xpMode"]:checked').value;const variable=mode==='variable';document.getElementById('lockedField').classList.toggle('hide',variable);document.getElementById('difficultyField').classList.toggle('hide',!variable);document.getElementById('suggestedField').classList.toggle('hide',!variable)}
-  function resetTaskForm(){document.getElementById('taskForm').reset();document.getElementById('taskDate').value=localDate();document.getElementById('startDate').value=localDate();document.getElementById('suggestedXP').value=20;updateRepeatFields();updateXPFields()}
   let editingTaskId='';
   function openTaskEditor(id){
     const task=state.tasks.find(item=>item.id===id);if(!task)return;
