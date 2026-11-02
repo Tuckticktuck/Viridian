@@ -961,9 +961,24 @@ body{
   function setCategory(id){currentCategory=id;setPage('category')}
   function buildNav(){const nav=document.getElementById('nav');const options=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.name]),['tasks','Task manager'],['create','Create task'],['planner','Planner'],['history','History'],['calendar','Calendar'],['weekly','Weekly review'],['rewards','Rewards & goals'],['settings','Settings']];nav.innerHTML=`<label class="nav-label" for="pageSelect"><span>View</span><span class="nav-select-wrap"><select id="pageSelect" class="nav-select" aria-label="Choose a Viridian page">${options.map(([id,label])=>`<option value="${id}">${escapeHTML(label)}</option>`).join('')}</select><span class="nav-select-chevron" aria-hidden="true"></span></span></label>`;const selector=nav.querySelector('#pageSelect');selector.value=document.querySelector('.page.active')?.id==='page-category'?`cat:${currentCategory}`:(document.querySelector('.page.active')?.id||'page-dashboard').replace('page-','');selector.onchange=event=>{const value=event.target.value;if(value.startsWith('cat:'))setCategory(value.slice(4));else setPage(value)}}
   function updateTop(){document.getElementById('todayDate').textContent=dateLabel();document.getElementById('topXP').textContent=`${xpTotal().toLocaleString()} XP`}
-  function taskCard(t){const completed=!!t.completion;const streak= t.repeat==='once'?null:taskStreak(t);const status=t.date<localDate()&&!completed?'Expired':completed?'Completed':'Due today';return `<div class="task-card"><button class="check-btn ${completed?'done':''}" data-toggle="${t.id}" ${t.date!==localDate()?'disabled':''} aria-label="${completed?'Undo completion':'Mark complete'}">${completed?'✓':'○'}</button><div class="task-main"><div class="task-title">${escapeHTML(t.name)}</div><div class="task-detail"><span>${escapeHTML(cat(t.category).name)}</span><span>·</span><span>${status}</span>${streak!==null?`<span>·</span><span>↗ ${streak} streak</span>`:''}</div></div><div class="reward">${completed?`+${t.completion.xp}`:`${t.xp}`} XP</div></div>`}
-  function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-  function bindToggles(root=document){root.querySelectorAll('[data-toggle]').forEach(btn=>{btn.addEventListener('click',()=>toggleCompletion(btn.dataset.toggle,btn.dataset.date||localDate()))})}
+  function taskCard(t){
+    const completed=!!t.completion,streak=t.repeat==='once'?null:taskStreak(t),priority=t.priority||'normal';
+    const status=t.notScheduledToday?'Not scheduled today':t.date<localDate()&&!completed?'Expired':completed?'Completed':t.date>localDate()?'Upcoming':'Due today';
+    const subtasks=Array.isArray(t.subtasks)?t.subtasks:[];
+    const checked=subtasks.filter(item=>item.done).length;
+    const extra=(t.notes||subtasks.length)?`<details class="task-extra"><summary>${subtasks.length?`Checklist · ${checked}/${subtasks.length}`:'Task notes'} · Details</summary><div class="task-extra-content">${t.notes?`<div class="task-note">${escapeHTML(t.notes).replace(/\n/g,'<br>')}</div>`:''}${subtasks.length?`<div class="subtask-list">${subtasks.map((item,index)=>`<label class="subtask-row ${item.done?'done':''}"><input type="checkbox" data-subtask-toggle="${t.id}" data-subtask-index="${index}" ${item.done?'checked':''}/><span>${escapeHTML(item.title||'Step')}</span></label>`).join('')}</div>`:''}</div></details>`:'';
+    const deadline=t.deadline?`<span class="deadline-chip ${t.deadline<localDate()&&!completed?'overdue':''}">Due ${prettyDate(t.deadline)}</span>`:'';
+    return `<div class="task-card">
+      <button class="check-btn ${completed?'done':''}" data-toggle="${t.id}" ${t.date!==localDate()||t.notScheduledToday?'disabled':''} aria-label="${completed?'Undo completion':'Mark complete'}">${completed?'✓':'○'}</button>
+      <div class="task-main"><div class="task-title">${escapeHTML(t.name)}</div>
+        <div class="task-detail"><span>${escapeHTML(cat(t.category).name)}</span><span>·</span><span>${status}</span><span class="priority-pill ${priority}">${priority}</span>${deadline}${streak!==null?`<span>·</span><span>↗ ${streak} streak</span>`:''}</div>${extra}
+      </div>
+      <div class="reward">${completed?`+${t.completion.xp}`:`${t.xp}`} XP</div>
+      <div class="task-actions"><button class="btn ghost" type="button" data-edit-task="${t.id}" aria-label="Edit ${escapeHTML(t.name)}">Edit</button></div>
+    </div>`;
+  }
+    function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function bindToggles(root=document){root.querySelectorAll('[data-toggle]').forEach(btn=>btn.addEventListener('click',()=>toggleCompletion(btn.dataset.toggle,btn.dataset.date||localDate())));root.querySelectorAll('[data-edit-task]').forEach(btn=>btn.addEventListener('click',()=>openTaskEditor(btn.dataset.editTask)));root.querySelectorAll('[data-subtask-toggle]').forEach(input=>input.addEventListener('change',()=>toggleSubtask(input.dataset.subtaskToggle,Number(input.dataset.subtaskIndex),input.checked)))}
   function toggleCompletion(taskId,date=localDate()){const key=occurrenceKey(taskId,date);const existing=state.completions[key];if(existing){delete state.completions[key];save();renderAll();notify(`Completion undone · ${existing.xp} XP removed`);return}const task=state.tasks.find(t=>t.id===taskId);if(!task||!isScheduled(task,date)||date!==localDate())return;state.completions[key]={xp:Number(task.xp),category:task.category,taskName:task.name,completedAt:new Date().toISOString()};save();renderAll();notify(`Task completed · +${task.xp} XP`)}
 
   function applyTheme(theme){
@@ -1187,9 +1202,46 @@ body{
     const list=document.getElementById('todayTasks');list.innerHTML=today.length?today.map(taskCard).join(''):`<div class="empty">Nothing scheduled for today yet.<br/>Create a task to start building your routine.</div>`;bindToggles(list);
     document.getElementById('categoryShortcuts').innerHTML=categories.map(c=>{const count=state.tasks.filter(t=>t.category===c.id).length;return `<button class="category-link" data-shortcut="${c.id}"><span class="category-icon">${escapeHTML(c.icon)}</span><span><strong>${escapeHTML(c.name)}</strong><small>${count} ${count===1?'task':'tasks'}</small></span></button>`}).join('');document.querySelectorAll('[data-shortcut]').forEach(b=>b.addEventListener('click',()=>setCategory(b.dataset.shortcut)));renderDashboardAnalytics();renderUpcomingTasks();applyDashboardWidgets();updateTop()}
   function scheduleText(t){if(t.repeat==='once')return `One time · ${prettyDate(t.oneDate)}`;if(t.repeat==='daily')return `Every day · from ${prettyDate(t.startDate)}`;if(t.repeat==='weekdays')return `Weekdays · from ${prettyDate(t.startDate)}`;if(t.repeat==='weekends')return `Weekends · from ${prettyDate(t.startDate)}`;return `${(t.days||[]).map(d=>weekdays[d]).join(', ')} · from ${prettyDate(t.startDate)}`}
-  function renderCategory(){const c=cat(currentCategory);document.getElementById('categoryEyebrow').textContent='Tracking area';document.getElementById('categoryTitle').textContent=c.name;document.getElementById('categoryDescription').textContent=c.desc;const tasks=state.tasks.filter(t=>t.category===currentCategory);const el=document.getElementById('categoryTasks');if(!tasks.length){el.innerHTML='<div class="empty">No tasks in this category yet.<br/>Create one to add it here.</div>';return}const today=localDate();el.innerHTML=tasks.map(t=>{const due=isScheduled(t,today),done=!!state.completions[occurrenceKey(t.id,today)];return `<div class="task-card"><div class="task-main"><div class="task-title">${escapeHTML(t.name)}</div><div class="task-detail"><span>${scheduleText(t)}</span><span>·</span><span>${t.mode==='variable'?'Variable XP':'Locked XP'}</span>${t.repeat!=='once'?`<span>·</span><span>↗ ${taskStreak(t)} streak</span>`:''}</div>${due?`<div class="task-detail"><span class="tag">${done?'Completed today':'Scheduled today'}</span></div>`:''}</div><div class="reward">${t.xp} XP</div>${due?`<button class="check-btn ${done?'done':''}" data-toggle="${t.id}" aria-label="${done?'Undo completion':'Mark complete'}">${done?'✓':'○'}</button>`:''}<button class="check-btn" data-delete="${t.id}" aria-label="Delete task" title="Delete task" style="border-color:rgba(228,154,146,.2);background:rgba(228,154,146,.07);color:#e9aaa2">×</button></div>`}).join('');bindToggles(el);el.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>deleteTask(b.dataset.delete)))}
-  function deleteTask(id){const task=state.tasks.find(t=>t.id===id);if(!task)return;if(!confirm(`Delete “${task.name}”? Past XP remains in your total, but this task’s history will no longer be shown.`))return;state.tasks=state.tasks.filter(t=>t.id!==id);save();renderAll();renderCategory();notify('Task deleted')}
-  
+  function renderCategory(){
+    const c=cat(currentCategory);
+    document.getElementById('categoryEyebrow').textContent='Tracking area';
+    document.getElementById('categoryTitle').textContent=c.name;
+    document.getElementById('categoryDescription').textContent=c.desc;
+    const tasks=state.tasks.filter(t=>t.category===currentCategory);
+    const el=document.getElementById('categoryTasks');
+    if(!tasks.length){el.innerHTML='<div class="empty">No tasks in this category yet.<br/>Create one to add it here.</div>';return}
+    const today=localDate();
+    el.innerHTML=tasks.map(task=>{
+      const due=isScheduled(task,today),completion=due?state.completions[occurrenceKey(task.id,today)]||null:null;
+      return taskCard({...task,date:today,completion,notScheduledToday:!due});
+    }).join('');
+    bindToggles(el);
+    el.querySelectorAll('[data-delete]').forEach(button=>button.addEventListener('click',()=>deleteTask(button.dataset.delete)));
+  }
+  function toggleSubtask(taskId,index,checked){
+    const task=state.tasks.find(item=>item.id===taskId);if(!task||!Array.isArray(task.subtasks)||!task.subtasks[index])return;
+    task.subtasks[index].done=!!checked;task.updatedAt=new Date().toISOString();save();renderAll();
+  }
+    function deleteTask(id){
+    const task=state.tasks.find(item=>item.id===id);if(!task)return;
+    if(!confirm(`Move "${task.name}" to Recently Deleted? You can restore it from Settings.`))return;
+    state.deletedTasks=Array.isArray(state.deletedTasks)?state.deletedTasks:[];
+    state.deletedTasks.push({...task,deletedAt:new Date().toISOString()});
+    state.tasks=state.tasks.filter(item=>item.id!==id);
+    save();renderAll();notify('Task moved to Recently Deleted');
+  }
+  function restoreDeletedTask(id){
+    const task=state.deletedTasks.find(item=>item.id===id);if(!task)return;
+    const {deletedAt,...restored}=task;state.tasks.push(restored);
+    state.deletedTasks=state.deletedTasks.filter(item=>item.id!==id);
+    save();renderAll();renderRecovery();notify('Task restored');
+  }
+  function permanentlyDeleteTask(id){
+    if(!confirm('Permanently delete this task? This cannot be undone.'))return;
+    state.deletedTasks=state.deletedTasks.filter(item=>item.id!==id);
+    save();renderRecovery();notify('Task permanently deleted');
+  }
+    
   let reviewWeekOffset=0;
   function mondayOfWeek(date){const d=parseDate(date);d.setDate(d.getDate()-((d.getDay()+6)%7));return localDate(d)}
   function selectedReviewWeek(){const start=addDays(mondayOfWeek(localDate()),reviewWeekOffset*7);const sunday=addDays(start,6);const end=reviewWeekOffset===0&&sunday>localDate()?localDate():sunday;return {start,end,sunday}}
@@ -1227,8 +1279,72 @@ body{
   function updateRepeatFields(){const repeat=document.getElementById('repeatType').value;document.getElementById('dateField').classList.toggle('hide',repeat!=='once');document.getElementById('startField').classList.toggle('hide',repeat==='once');document.getElementById('customDaysField').classList.toggle('hide',repeat!=='custom');document.getElementById('taskDate').required=repeat==='once';document.getElementById('startDate').required=repeat!=='once'}
   function updateXPFields(){const mode=document.querySelector('input[name="xpMode"]:checked').value;const variable=mode==='variable';document.getElementById('lockedField').classList.toggle('hide',variable);document.getElementById('difficultyField').classList.toggle('hide',!variable);document.getElementById('suggestedField').classList.toggle('hide',!variable)}
   function resetTaskForm(){document.getElementById('taskForm').reset();document.getElementById('taskDate').value=localDate();document.getElementById('startDate').value=localDate();document.getElementById('suggestedXP').value=20;updateRepeatFields();updateXPFields()}
-  function addTask(e){e.preventDefault();const name=document.getElementById('taskName').value.trim();const repeat=document.getElementById('repeatType').value;const mode=document.querySelector('input[name="xpMode"]:checked').value;const startDate=document.getElementById('startDate').value;const oneDate=document.getElementById('taskDate').value;const days=[...document.querySelectorAll('#dayPicks input:checked')].map(x=>Number(x.value));if(!name){notify('Add a task name first');return}if(repeat==='once'&&!oneDate){notify('Choose a task date');return}if(repeat!=='once'&&!startDate){notify('Choose a start date');return}if(repeat==='custom'&&!days.length){notify('Choose at least one day');return}const xp=mode==='locked'?Number(document.getElementById('lockedXP').value):Number(document.getElementById('suggestedXP').value);if(!Number.isFinite(xp)||xp<1||xp>10000){notify('XP must be between 1 and 10,000');return}const task={id:`t_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,name,category:document.getElementById('taskCategory').value,repeat,mode,xp:Math.round(xp),createdOn:localDate()};if(repeat==='once')task.oneDate=oneDate;else{task.startDate=startDate;if(repeat==='custom')task.days=days}state.tasks.push(task);save();resetTaskForm();renderAll();notify('Task created');setCategory(task.category)}
-  function renderAll(){renderDashboard();if(document.getElementById('page-category').classList.contains('active'))renderCategory();if(document.getElementById('page-history').classList.contains('active'))renderHistory();if(document.getElementById('page-weekly').classList.contains('active'))renderWeeklyReview();if(document.getElementById('page-calendar').classList.contains('active'))renderCalendar();if(document.getElementById('page-rewards').classList.contains('active'))renderGamePage();if(document.getElementById('page-settings').classList.contains('active'))renderSettingsEnhancements()}
+  let editingTaskId='';
+  function openTaskEditor(id){
+    const task=state.tasks.find(item=>item.id===id);if(!task)return;
+    editingTaskId=id;document.getElementById('editingTaskId').value=id;
+    document.querySelector('#page-create .page-head h1').textContent='Edit task';
+    document.querySelector('#page-create .page-head p').textContent='Update the task details, schedule, checklist, or priority.';
+    document.getElementById('taskName').value=task.name||'';
+    document.getElementById('taskCategory').value=task.category;
+    document.getElementById('repeatType').value=task.repeat||'once';
+    document.getElementById('taskDate').value=task.oneDate||localDate();
+    document.getElementById('startDate').value=task.startDate||localDate();
+    document.querySelectorAll('#dayPicks input').forEach(input=>input.checked=(task.days||[]).includes(Number(input.value)));
+    document.getElementById('taskPriority').value=task.priority||'normal';
+    document.getElementById('taskDaypart').value=task.daypart||'anytime';
+    document.getElementById('taskDeadline').value=task.deadline||'';
+    document.getElementById('taskNotes').value=task.notes||'';
+    document.getElementById('taskSubtasks').value=(task.subtasks||[]).map(item=>item.title||'').join('\n');
+    document.querySelector(`input[name="xpMode"][value="${task.mode||'locked'}"]`).checked=true;
+    document.getElementById('lockedXP').value=task.xp||20;
+    document.getElementById('suggestedXP').value=task.xp||20;
+    updateRepeatFields();updateXPFields();
+    document.getElementById('taskSubmitButton').textContent='Save changes';
+    document.getElementById('cancelEditTask').classList.remove('hide');
+    setPage('create');
+  }
+  function resetTaskForm(){
+    editingTaskId='';document.getElementById('editingTaskId').value='';
+    document.getElementById('taskForm').reset();
+    document.getElementById('taskDate').value=localDate();
+    document.getElementById('startDate').value=localDate();
+    document.getElementById('suggestedXP').value=20;
+    document.getElementById('taskPriority').value='normal';
+    document.getElementById('taskDaypart').value='anytime';
+    document.querySelector('#page-create .page-head h1').textContent='Create a task';
+    document.querySelector('#page-create .page-head p').textContent='Choose where it belongs, when it appears, and how its XP works.';
+    document.getElementById('taskSubmitButton').textContent='Save task';
+    document.getElementById('cancelEditTask').classList.add('hide');
+    updateRepeatFields();updateXPFields();
+  }
+  function addTask(event){
+    event.preventDefault();
+    const name=document.getElementById('taskName').value.trim(),repeat=document.getElementById('repeatType').value,mode=document.querySelector('input[name="xpMode"]:checked').value;
+    const startDate=document.getElementById('startDate').value,oneDate=document.getElementById('taskDate').value;
+    const days=[...document.querySelectorAll('#dayPicks input:checked')].map(input=>Number(input.value));
+    const xp=mode==='locked'?Number(document.getElementById('lockedXP').value):Number(document.getElementById('suggestedXP').value);
+    const deadline=document.getElementById('taskDeadline').value;
+    if(!name){notify('Add a task name first');return}
+    if(repeat==='once'&&!oneDate){notify('Choose a task date');return}
+    if(repeat!=='once'&&!startDate){notify('Choose a start date');return}
+    if(repeat==='custom'&&!days.length){notify('Choose at least one day');return}
+    if(!Number.isFinite(xp)||xp<1||xp>10000){notify('XP must be between 1 and 10,000');return}
+    if(deadline&&deadline<localDate()){notify('Choose a deadline that is today or later');return}
+    const subtasks=document.getElementById('taskSubtasks').value.split('\n').map(line=>line.trim()).filter(Boolean).slice(0,20);
+    const existingId=editingTaskId,task=existingId?state.tasks.find(item=>item.id===existingId):null;
+    const updated={...(task||{}),id:existingId||`t_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+      name,category:document.getElementById('taskCategory').value,repeat,mode,xp:Math.round(xp),
+      priority:document.getElementById('taskPriority').value,daypart:document.getElementById('taskDaypart').value,
+      deadline:deadline||'',notes:document.getElementById('taskNotes').value.trim(),
+      subtasks:subtasks.map(title=>({title,done:task?.subtasks?.find(item=>item.title===title)?.done||false})),
+      createdOn:task?.createdOn||localDate(),updatedAt:new Date().toISOString()};
+    if(repeat==='once'){updated.oneDate=oneDate;delete updated.startDate;delete updated.days}
+    else{updated.startDate=startDate;delete updated.oneDate;if(repeat==='custom')updated.days=days;else delete updated.days}
+    if(task){Object.assign(task,updated);notify('Task updated')}else{state.tasks.push(updated);notify('Task created')}
+    const category=updated.category;save();resetTaskForm();renderAll();setCategory(category);
+  }
+    function renderAll(){renderDashboard();if(document.getElementById('page-category').classList.contains('active'))renderCategory();if(document.getElementById('page-history').classList.contains('active'))renderHistory();if(document.getElementById('page-weekly').classList.contains('active'))renderWeeklyReview();if(document.getElementById('page-calendar').classList.contains('active'))renderCalendar();if(document.getElementById('page-rewards').classList.contains('active'))renderGamePage();if(document.getElementById('page-settings').classList.contains('active'))renderSettingsEnhancements()}
 
   function addMilestone(event){
     event.preventDefault();const name=document.getElementById('milestoneName').value.trim(),type=document.getElementById('milestoneType').value,target=Number(document.getElementById('milestoneTarget').value),category=document.getElementById('milestoneCategory').value;
