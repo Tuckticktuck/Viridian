@@ -486,6 +486,19 @@ body{
 @media(max-width:850px){.planner-dayparts{grid-template-columns:1fr 1fr}.planner-week-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:580px){.task-filter-grid{grid-template-columns:1fr}.filter-footer{align-items:flex-start;flex-direction:column}.task-actions{flex-wrap:wrap}.planner-toolbar{flex-wrap:wrap}.planner-toolbar strong{order:-1;width:100%}.planner-week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.planner-dayparts{grid-template-columns:1fr 1fr}.planner-part{padding:10px}}
 
+
+/* Recovery, shortcuts, and added achievement settings */
+.recovery-list{display:grid;gap:9px}
+.recovery-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:9px;padding:11px;border:1px solid var(--line);border-radius:11px;background:rgba(17,43,35,.46)}
+.recovery-row strong{font-size:11px;display:block;overflow-wrap:anywhere}
+.recovery-row small{font-size:9px;color:var(--muted);display:block;margin-top:3px}
+.recovery-row .btn{padding:7px 9px;font-size:10px}
+.shortcut-list{display:grid;gap:10px;margin-top:12px}
+.shortcut-list>div{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.shortcut-list span{margin-left:auto;font-size:11px;color:var(--muted)}
+kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:rgba(0,0,0,.16);color:var(--mint)}
+@media(max-width:580px){.recovery-row{grid-template-columns:minmax(0,1fr) auto}.recovery-row .btn:last-child{grid-column:2}.shortcut-list span{width:100%;margin-left:0}}
+
 </style>
 </head>
 <body>
@@ -672,6 +685,27 @@ body{
         <div class="panel"><div class="section-row" style="margin-top:0"><div><h2>Achievements</h2><div class="sub">Badges unlock automatically as you progress</div></div></div><div class="achievement-grid" id="achievementList"></div></div>
         <div class="panel"><div class="section-row" style="margin-top:0"><div><h2>Category levels</h2><div class="sub">XP earned in each area</div></div></div><div class="category-level-list" id="categoryLevels"></div></div>
       </div>
+
+      <div class="grid game-two-col game-top-gap">
+        <div class="panel">
+          <div class="section-row" style="margin-top:0"><div><h2>Custom achievements</h2><div class="sub">Create your own milestones and choose their gold reward</div></div></div>
+          <form id="customAchievementForm" class="compact-form">
+            <div class="field"><label for="customAchievementName">Achievement name</label><input id="customAchievementName" maxlength="70" required placeholder="e.g. Complete 25 school tasks" /></div>
+            <div class="form-grid">
+              <div class="field"><label for="customAchievementType">Measure</label><select id="customAchievementType"><option value="tasks">Tasks completed</option><option value="xp">Total XP</option><option value="streak">Current streak days</option><option value="category">Tasks in a section</option></select></div>
+              <div class="field"><label for="customAchievementTarget">Target</label><input id="customAchievementTarget" type="number" min="1" max="1000000" value="25" required /></div>
+              <div class="field"><label for="customAchievementGold">Gold reward</label><input id="customAchievementGold" type="number" min="0" max="10000" value="10" required /></div>
+              <div class="field hide" id="customAchievementCategoryField"><label for="customAchievementCategory">Section</label><select id="customAchievementCategory"></select></div>
+            </div>
+            <button class="btn" type="submit">Create achievement</button>
+          </form>
+          <div class="achievement-grid" id="customAchievementList"></div>
+        </div>
+        <div class="panel">
+          <div class="section-row" style="margin-top:0"><div><h2>Achievement progress</h2><div class="sub">Custom achievements unlock once their target is reached.</div></div></div>
+          <div class="hint">Rewards are added to your gold balance automatically when an achievement unlocks. You can create as many personal achievements as you need.</div>
+        </div>
+      </div>
       <div class="grid game-two-col game-top-gap">
         <div class="panel">
           <div class="section-row" style="margin-top:0"><div><h2>Personal milestones</h2><div class="sub">Create a goal and watch its progress</div></div></div>
@@ -680,7 +714,7 @@ body{
             <div class="form-grid">
               <div class="field"><label for="milestoneType">Measure</label><select id="milestoneType"><option value="xp">Total XP</option><option value="tasks">Tasks completed</option><option value="category">Category tasks completed</option></select></div>
               <div class="field"><label for="milestoneTarget">Target</label><input id="milestoneTarget" type="number" min="1" max="1000000" value="1000" required /></div>
-              <div class="field full hide" id="milestoneCategoryField"><label for="milestoneCategory">Category</label><select id="milestoneCategory"></select></div>
+              <div class="field full hide" id="milestoneCategoryField"><label for="milestoneCategory">Category</label><select id="milestoneCategory"></select></div><div class="field"><label for="milestoneRewardGold">Gold reward (optional)</label><input id="milestoneRewardGold" type="number" min="0" max="10000" value="0" /></div>
             </div>
             <button class="btn" type="submit">Add milestone</button>
           </form>
@@ -703,7 +737,7 @@ body{
         <div class="panel">
           <div class="section-row" style="margin-top:0"><div><h2>Quest chains</h2><div class="sub">Connect a few steps into one bigger quest</div></div></div>
           <form id="questForm" class="compact-form">
-            <div class="field"><label for="questName">Quest name</label><input id="questName" maxlength="70" required placeholder="e.g. Prepare for science exam" /></div>
+            <div class="field"><label for="questName">Quest name</label><input id="questName" maxlength="70" required placeholder="e.g. Prepare for science exam" /></div><div class="field"><label for="questCategory">Quest section</label><select id="questCategory"></select></div>
             <div class="field"><label for="questSteps">Quest steps</label><textarea id="questSteps" rows="4" maxlength="1200" required placeholder="Review class notes&#10;Make a study sheet&#10;Complete practice questions"></textarea><div class="hint">Enter one step per line. Complete the steps as you go.</div></div>
             <button class="btn" type="submit">Create quest chain</button>
           </form>
@@ -719,7 +753,7 @@ body{
               <div class="field" style="justify-content:end"><button class="btn secondary" type="submit">Add reward</button></div>
             </div>
           </form>
-          <div class="section-row"><div><h2>My rewards</h2><div class="sub">Rewards you have purchased</div></div></div>
+          <div class="section-row"><div><h2>Reward history</h2><div class="sub">Track purchases and redemption status</div></div></div>
           <div class="purchase-list" id="purchaseList"></div>
         </div>
       </div>
@@ -750,6 +784,21 @@ body{
         <div class="panel"><h2 style="margin:0 0 8px;font-size:16px">Offline access</h2><p class="muted" style="font-size:12px;line-height:1.6">Viridian caches its app shell and keeps a local copy of your signed-in tracker. Changes made offline are queued for cloud sync when you reconnect.</p><div class="offline-status-row"><span class="offline-indicator" id="offlineIndicator"></span><strong id="offlineStatus">Checking connection…</strong></div><div class="hint" id="offlineSyncNote">Open Viridian once while online so your Chromebook can cache the app for later.</div></div>
 
         <div class="panel"><h2 style="margin:0 0 8px;font-size:16px">System rules</h2><ul class="rule-list"><li>XP is earned only when you mark a task complete.</li><li>Recurring tasks appear automatically on their scheduled days.</li><li>Uncompleted tasks expire at the end of their scheduled day.</li><li>There is no daily XP cap.</li><li>Undoing a completion removes that occurrence’s XP.</li><li>Variable XP starts with a five-level suggestion: 5, 10, 20, 35, or 50 XP. You may adjust it.</li><li>Level requirements start at 100 XP and rise by 20 XP each level.</li><li>Task streaks count consecutive scheduled occurrences completed.</li><li>Overall streaks count consecutive calendar days with at least one completed task.</li></ul></div>
+
+        <div class="panel category-manager-panel">
+          <div class="section-row" style="margin-top:0"><div><h2>Recently deleted tasks</h2><div class="sub">Restore tasks you removed by mistake, or permanently delete them.</div></div></div>
+          <div class="recovery-list" id="recoveryList"></div>
+        </div>
+        <div class="panel">
+          <h2 style="margin:0 0 8px;font-size:16px">Backup reminders</h2>
+          <p class="muted" style="font-size:12px;line-height:1.6">Viridian can remind you to export a backup every 30 days. Backups are downloaded to your device and are not sent anywhere.</p>
+          <label class="notification-setting"><input type="checkbox" id="backupReminderEnabled" checked /> Remind me to export a backup</label>
+          <div class="hint" id="backupReminderStatus">No backup recorded yet.</div>
+        </div>
+        <div class="panel">
+          <h2 style="margin:0 0 8px;font-size:16px">Keyboard shortcuts</h2>
+          <div class="shortcut-list"><div><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>K</kbd><span>Open task search</span></div><div><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>N</kbd><span>Create a task</span></div><div><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd><span>Open Planner</span></div><div><kbd>Esc</kbd><span>Close an open details panel or editor</span></div></div>
+        </div>
         <div class="panel"><h2 style="margin:0 0 8px;font-size:16px">Privacy note</h2><p class="muted" style="font-size:12px;line-height:1.7">Sign in with your own account on each device to load the same tracker. Do not share your login details. The GitHub Pages website itself is public, but each account can access only its own tracker row through the database access rules.</p></div>
         <div class="panel"><h2 style="margin:0 0 8px;font-size:16px">Reset tracker</h2><p class="muted" style="font-size:12px;line-height:1.7">Resetting permanently clears all tasks, completions, and XP from this browser. Export a backup first if you may want to keep your progress.</p><button class="btn danger" id="resetAllBtn">Reset all data</button></div>
       </div>
@@ -812,7 +861,7 @@ body{
   let currentCategory = 'school';
   let toastTimer;
 
-  function blankState(){categories.splice(0,categories.length,...DEFAULT_CATEGORIES.map(item=>({...item})));return {tasks:[],deletedTasks:[],completions:{},reviews:{},categories:categories.map(item=>({...item})),calendarGoalPercent:80,theme:'viridian',dashboardWidgets:['today','upcoming','analytics','areas'],upcomingCollapsed:false,milestones:[],monthlyChallenges:[],questChains:[],customRewards:[],purchases:[],questGoldEarned:0,notifications:{enabled:false,time:'18:00',lastSentDate:''}}}
+  function blankState(){categories.splice(0,categories.length,...DEFAULT_CATEGORIES.map(item=>({...item})));return {tasks:[],deletedTasks:[],completions:{},reviews:{},categories:categories.map(item=>({...item})),calendarGoalPercent:80,theme:'viridian',dashboardWidgets:['today','upcoming','analytics','areas'],upcomingCollapsed:false,milestones:[],monthlyChallenges:[],questChains:[],customRewards:[],customAchievements:[],achievementUnlocks:{},purchases:[],questGoldEarned:0,backupReminderEnabled:true,lastBackupAt:'',notifications:{enabled:false,time:'18:00',lastSentDate:''}}}
   function sanitizeCategories(input){
     const source=Array.isArray(input)&&input.length?input:DEFAULT_CATEGORIES;
     const seenIds=new Set(),seenNames=new Set(),result=[];
@@ -827,7 +876,7 @@ body{
     }
     return result.length?result:DEFAULT_CATEGORIES.map(item=>({...item}));
   }
-  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();const base=blankState();const allowedGoals=[50,60,70,75,80,85,90,100];const goal=Number(parsed.calendarGoalPercent);const themes=Object.keys(THEME_PALETTES);categories.splice(0,categories.length,...sanitizeCategories(parsed.categories));return {...base,...parsed,tasks:parsed.tasks,deletedTasks:Array.isArray(parsed.deletedTasks)?parsed.deletedTasks:[],completions:parsed.completions,categories:categories.map(item=>({...item})),reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{},calendarGoalPercent:allowedGoals.includes(goal)?goal:80,theme:themes.includes(parsed.theme)?parsed.theme:'viridian',dashboardWidgets:Array.isArray(parsed.dashboardWidgets)?parsed.dashboardWidgets.filter(id=>DASHBOARD_WIDGET_IDS.includes(id)):base.dashboardWidgets,milestones:Array.isArray(parsed.milestones)?parsed.milestones:[],monthlyChallenges:Array.isArray(parsed.monthlyChallenges)?parsed.monthlyChallenges:[],questChains:Array.isArray(parsed.questChains)?parsed.questChains:[],customRewards:Array.isArray(parsed.customRewards)?parsed.customRewards:[],purchases:Array.isArray(parsed.purchases)?parsed.purchases:[],questGoldEarned:Number.isFinite(Number(parsed.questGoldEarned))?Math.max(0,Number(parsed.questGoldEarned)):0,notifications:{...base.notifications,...(parsed.notifications&&typeof parsed.notifications==='object'?parsed.notifications:{})},upcomingCollapsed:parsed.upcomingCollapsed===true}}
+  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();const base=blankState();const allowedGoals=[50,60,70,75,80,85,90,100];const goal=Number(parsed.calendarGoalPercent);const themes=Object.keys(THEME_PALETTES);categories.splice(0,categories.length,...sanitizeCategories(parsed.categories));return {...base,...parsed,tasks:parsed.tasks,deletedTasks:Array.isArray(parsed.deletedTasks)?parsed.deletedTasks:[],completions:parsed.completions,categories:categories.map(item=>({...item})),reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{},calendarGoalPercent:allowedGoals.includes(goal)?goal:80,theme:themes.includes(parsed.theme)?parsed.theme:'viridian',dashboardWidgets:Array.isArray(parsed.dashboardWidgets)?parsed.dashboardWidgets.filter(id=>DASHBOARD_WIDGET_IDS.includes(id)):base.dashboardWidgets,milestones:Array.isArray(parsed.milestones)?parsed.milestones:[],monthlyChallenges:Array.isArray(parsed.monthlyChallenges)?parsed.monthlyChallenges:[],questChains:Array.isArray(parsed.questChains)?parsed.questChains:[],customRewards:Array.isArray(parsed.customRewards)?parsed.customRewards:[],customAchievements:Array.isArray(parsed.customAchievements)?parsed.customAchievements:[],achievementUnlocks:parsed.achievementUnlocks&&typeof parsed.achievementUnlocks==='object'?parsed.achievementUnlocks:{},purchases:Array.isArray(parsed.purchases)?parsed.purchases:[],questGoldEarned:Number.isFinite(Number(parsed.questGoldEarned))?Math.max(0,Number(parsed.questGoldEarned)):0,notifications:{...base.notifications,...(parsed.notifications&&typeof parsed.notifications==='object'?parsed.notifications:{})},upcomingCollapsed:parsed.upcomingCollapsed===true,backupReminderEnabled:parsed.backupReminderEnabled!==false,lastBackupAt:typeof parsed.lastBackupAt==='string'?parsed.lastBackupAt:''}}
   function readLocalState(key){try{const raw=localStorage.getItem(key);if(!raw)return null;return normalizeState(JSON.parse(raw))}catch(e){return null}}
   function localUserKey(userId){return `${STORAGE_KEY}::${userId}`}
   function cacheCurrentState(){try{const key=authUser?localUserKey(authUser.id):STORAGE_KEY;localStorage.setItem(key,JSON.stringify(state))}catch(e){notify('The browser cache is full. Export a backup from Settings.')}}
