@@ -957,7 +957,7 @@ body{
   function taskStreak(task){const today=localDate();const todayScheduled=isScheduled(task,today);let cursor=today;if(todayScheduled&&!state.completions[occurrenceKey(task.id,today)])cursor=addDays(cursor,-1);let count=0;const start=task.repeat==='once'?task.oneDate:task.startDate;if(!start)return 0;for(let guard=0;guard<4000&&cursor>=start;guard++,cursor=addDays(cursor,-1)){if(isScheduled(task,cursor)){if(state.completions[occurrenceKey(task.id,cursor)])count++;else break}}return count}
   function overallStreak(){const today=localDate();let cursor=today;const completedToday=Object.keys(state.completions).some(k=>k.endsWith(`__${today}`));if(!completedToday)cursor=addDays(cursor,-1);let count=0;for(let i=0;i<4000;i++){const has=Object.keys(state.completions).some(k=>k.endsWith(`__${cursor}`));if(!has)break;count++;cursor=addDays(cursor,-1)}return count}
   function notify(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2300)}
-  function setPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const pageEl=document.getElementById(`page-${page}`);if(pageEl)pageEl.classList.add('active');const selector=document.getElementById('pageSelect');if(selector)selector.value=page==='category'?`cat:${currentCategory}`:page;window.scrollTo({top:0,behavior:'smooth'});if(page==='dashboard')renderDashboard();if(page==='category')renderCategory();if(page==='history')renderHistory();if(page==='weekly')renderWeeklyReview();if(page==='calendar')renderCalendar();if(page==='rewards')renderGamePage();if(page==='settings')renderSettingsEnhancements()}
+  function setPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const pageEl=document.getElementById(`page-${page}`);if(pageEl)pageEl.classList.add('active');const selector=document.getElementById('pageSelect');if(selector)selector.value=page==='category'?`cat:${currentCategory}`:page;window.scrollTo({top:0,behavior:'smooth'});if(page==='dashboard')renderDashboard();if(page==='category')renderCategory();if(page==='tasks')renderTaskManager();if(page==='planner')renderPlanner();if(page==='history')renderHistory();if(page==='weekly')renderWeeklyReview();if(page==='calendar')renderCalendar();if(page==='rewards')renderGamePage();if(page==='settings')renderSettingsEnhancements()}
   function setCategory(id){currentCategory=id;setPage('category')}
   function buildNav(){const nav=document.getElementById('nav');const options=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.name]),['tasks','Task manager'],['create','Create task'],['planner','Planner'],['history','History'],['calendar','Calendar'],['weekly','Weekly review'],['rewards','Rewards & goals'],['settings','Settings']];nav.innerHTML=`<label class="nav-label" for="pageSelect"><span>View</span><span class="nav-select-wrap"><select id="pageSelect" class="nav-select" aria-label="Choose a Viridian page">${options.map(([id,label])=>`<option value="${id}">${escapeHTML(label)}</option>`).join('')}</select><span class="nav-select-chevron" aria-hidden="true"></span></span></label>`;const selector=nav.querySelector('#pageSelect');selector.value=document.querySelector('.page.active')?.id==='page-category'?`cat:${currentCategory}`:(document.querySelector('.page.active')?.id||'page-dashboard').replace('page-','');selector.onchange=event=>{const value=event.target.value;if(value.startsWith('cat:'))setCategory(value.slice(4));else setPage(value)}}
   function updateTop(){document.getElementById('todayDate').textContent=dateLabel();document.getElementById('topXP').textContent=`${xpTotal().toLocaleString()} XP`}
@@ -974,11 +974,11 @@ body{
         <div class="task-detail"><span>${escapeHTML(cat(t.category).name)}</span><span>·</span><span>${status}</span><span class="priority-pill ${priority}">${priority}</span>${deadline}${streak!==null?`<span>·</span><span>↗ ${streak} streak</span>`:''}</div>${extra}
       </div>
       <div class="reward">${completed?`+${t.completion.xp}`:`${t.xp}`} XP</div>
-      <div class="task-actions"><button class="btn ghost" type="button" data-edit-task="${t.id}" aria-label="Edit ${escapeHTML(t.name)}">Edit</button></div>
+      <div class="task-actions"><button class="btn ghost" type="button" data-edit-task="${t.id}" aria-label="Edit ${escapeHTML(t.name)}">Edit</button><button class="btn danger" type="button" data-delete-task="${t.id}" aria-label="Delete ${escapeHTML(t.name)}">Delete</button></div>
     </div>`;
   }
     function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-  function bindToggles(root=document){root.querySelectorAll('[data-toggle]').forEach(btn=>btn.addEventListener('click',()=>toggleCompletion(btn.dataset.toggle,btn.dataset.date||localDate())));root.querySelectorAll('[data-edit-task]').forEach(btn=>btn.addEventListener('click',()=>openTaskEditor(btn.dataset.editTask)));root.querySelectorAll('[data-subtask-toggle]').forEach(input=>input.addEventListener('change',()=>toggleSubtask(input.dataset.subtaskToggle,Number(input.dataset.subtaskIndex),input.checked)))}
+  function bindToggles(root=document){root.querySelectorAll('[data-toggle]').forEach(btn=>btn.addEventListener('click',()=>toggleCompletion(btn.dataset.toggle,btn.dataset.date||localDate())));root.querySelectorAll('[data-edit-task]').forEach(btn=>btn.addEventListener('click',()=>openTaskEditor(btn.dataset.editTask)));root.querySelectorAll('[data-delete-task]').forEach(btn=>btn.addEventListener('click',()=>deleteTask(btn.dataset.deleteTask)));root.querySelectorAll('[data-subtask-toggle]').forEach(input=>input.addEventListener('change',()=>toggleSubtask(input.dataset.subtaskToggle,Number(input.dataset.subtaskIndex),input.checked)))}
   function toggleCompletion(taskId,date=localDate()){const key=occurrenceKey(taskId,date);const existing=state.completions[key];if(existing){delete state.completions[key];save();renderAll();notify(`Completion undone · ${existing.xp} XP removed`);return}const task=state.tasks.find(t=>t.id===taskId);if(!task||!isScheduled(task,date)||date!==localDate())return;state.completions[key]={xp:Number(task.xp),category:task.category,taskName:task.name,completedAt:new Date().toISOString()};save();renderAll();notify(`Task completed · +${task.xp} XP`)}
 
   function applyTheme(theme){
@@ -1146,6 +1146,55 @@ body{
     if(currentCategory===id)currentCategory=targetId;
     saveCategories();notify('Task section deleted');
   }
+
+
+  function taskPriorityRank(priority){return ({urgent:0,high:1,normal:2,low:3})[priority||'normal']??2}
+  function taskScheduledSoon(task){for(let offset=1;offset<=7;offset++){if(isScheduled(task,addDays(localDate(),offset)))return true}return false}
+  function renderTaskManager(){
+    const categoryFilter=document.getElementById('taskFilterCategory');
+    if(categoryFilter){const current=categoryFilter.value;categoryFilter.innerHTML='<option value="">All sections</option>'+categories.map(category=>`<option value="${category.id}">${escapeHTML(category.name)}</option>`).join('');categoryFilter.value=current}
+    const query=(document.getElementById('taskSearch').value||'').trim().toLocaleLowerCase();
+    const category=document.getElementById('taskFilterCategory').value,priority=document.getElementById('taskFilterPriority').value,status=document.getElementById('taskFilterStatus').value,today=localDate();
+    const rows=state.tasks.filter(task=>{
+      if(query&&![(task.name||''),(task.notes||'')].some(value=>value.toLocaleLowerCase().includes(query)))return false;
+      if(category&&task.category!==category)return false;
+      if(priority&&(task.priority||'normal')!==priority)return false;
+      const done=!!state.completions[occurrenceKey(task.id,today)];
+      if(status==='today'&&!isScheduled(task,today))return false;
+      if(status==='upcoming'&&!taskScheduledSoon(task))return false;
+      if(status==='overdue'&&!(task.deadline&&task.deadline<today))return false;
+      if(status==='completed'&&!done)return false;
+      return true;
+    }).sort((a,b)=>taskPriorityRank(a.priority)-taskPriorityRank(b.priority)||(a.deadline||'9999').localeCompare(b.deadline||'9999')||a.name.localeCompare(b.name));
+    document.getElementById('taskFilterCount').textContent=`Showing ${rows.length} of ${state.tasks.length} tasks`;
+    const list=document.getElementById('taskManagerList');
+    list.innerHTML=rows.length?rows.map(task=>{
+      const due=isScheduled(task,today),completion=due?state.completions[occurrenceKey(task.id,today)]||null:null;
+      return taskCard({...task,date:today,completion,notScheduledToday:!due});
+    }).join(''):'<div class="empty">No tasks match those filters. Try clearing a filter or creating a task.</div>';
+    bindToggles(list);
+  }
+  let plannerWeekOffset=0;
+  function plannerWeek(){const start=addDays(mondayOfWeek(localDate()),plannerWeekOffset*7);return {start,end:addDays(start,6)}}
+  function renderPlanner(){
+    const today=localDate();
+    const todayItems=state.tasks.filter(task=>isScheduled(task,today)).sort((a,b)=>taskPriorityRank(a.priority)-taskPriorityRank(b.priority));
+    const parts=[['morning','Morning'],['afternoon','Afternoon'],['evening','Evening'],['anytime','Anytime']];
+    document.getElementById('dailyPlanner').innerHTML=parts.map(([key,label])=>{
+      const tasks=todayItems.filter(task=>(task.daypart||'anytime')===key);
+      return `<section class="planner-part"><h3>${label}</h3><div class="planner-part-list">${tasks.length?tasks.map(task=>`<div class="planner-mini-task"><strong>${escapeHTML(task.name)}</strong><small>${escapeHTML(cat(task.category).short)} · ${task.priority||'normal'} · ${task.xp} XP</small><button type="button" class="btn ghost" data-edit-task="${task.id}">Edit</button></div>`).join(''):'<div class="planner-empty">Nothing planned</div>'}</div></section>`;
+    }).join('');
+    const period=plannerWeek();
+    document.getElementById('plannerWeekLabel').textContent=`${prettyDate(period.start)} – ${prettyDate(period.end)}`;
+    const columns=[];
+    for(let offset=0;offset<7;offset++){
+      const date=addDays(period.start,offset),tasks=state.tasks.filter(task=>isScheduled(task,date)).sort((a,b)=>taskPriorityRank(a.priority)-taskPriorityRank(b.priority)||a.name.localeCompare(b.name));
+      columns.push(`<section class="planner-week-day ${date===today?'today':''}"><h3>${parseDate(date).toLocaleDateString(undefined,{weekday:'long'})}</h3><div class="planner-day-date">${prettyDate(date)}</div>${tasks.length?tasks.map(task=>`<button type="button" class="planner-week-task ${task.priority||'normal'}" data-edit-task="${task.id}" title="Edit ${escapeHTML(task.name)}">${escapeHTML(task.name)}</button>`).join(''):'<div class="planner-empty">No tasks</div>'}</section>`);
+    }
+    document.getElementById('weeklyPlanner').innerHTML=columns.join('');
+    bindToggles(document.getElementById('dailyPlanner'));bindToggles(document.getElementById('weeklyPlanner'));
+  }
+  function clearTaskFilters(){document.getElementById('taskSearch').value='';document.getElementById('taskFilterCategory').value='';document.getElementById('taskFilterPriority').value='';document.getElementById('taskFilterStatus').value='';renderTaskManager()}
 
   function renderSettingsEnhancements(){
     renderCategoryManager();
@@ -1344,7 +1393,7 @@ body{
     if(task){Object.assign(task,updated);notify('Task updated')}else{state.tasks.push(updated);notify('Task created')}
     const category=updated.category;save();resetTaskForm();renderAll();setCategory(category);
   }
-    function renderAll(){renderDashboard();if(document.getElementById('page-category').classList.contains('active'))renderCategory();if(document.getElementById('page-history').classList.contains('active'))renderHistory();if(document.getElementById('page-weekly').classList.contains('active'))renderWeeklyReview();if(document.getElementById('page-calendar').classList.contains('active'))renderCalendar();if(document.getElementById('page-rewards').classList.contains('active'))renderGamePage();if(document.getElementById('page-settings').classList.contains('active'))renderSettingsEnhancements()}
+    function renderAll(){renderDashboard();if(document.getElementById('page-category').classList.contains('active'))renderCategory();if(document.getElementById('page-tasks').classList.contains('active'))renderTaskManager();if(document.getElementById('page-planner').classList.contains('active'))renderPlanner();if(document.getElementById('page-history').classList.contains('active'))renderHistory();if(document.getElementById('page-weekly').classList.contains('active'))renderWeeklyReview();if(document.getElementById('page-calendar').classList.contains('active'))renderCalendar();if(document.getElementById('page-rewards').classList.contains('active'))renderGamePage();if(document.getElementById('page-settings').classList.contains('active'))renderSettingsEnhancements()}
 
   function addMilestone(event){
     event.preventDefault();const name=document.getElementById('milestoneName').value.trim(),type=document.getElementById('milestoneType').value,target=Number(document.getElementById('milestoneTarget').value),category=document.getElementById('milestoneCategory').value;
@@ -1380,6 +1429,7 @@ body{
 
   function init(){buildNav();populateForm();
     document.getElementById('categoryAddForm').addEventListener('submit',addCategory);
+    document.getElementById('taskSearch').addEventListener('input',renderTaskManager);document.getElementById('taskFilterCategory').addEventListener('change',renderTaskManager);document.getElementById('taskFilterPriority').addEventListener('change',renderTaskManager);document.getElementById('taskFilterStatus').addEventListener('change',renderTaskManager);document.getElementById('clearTaskFilters').addEventListener('click',clearTaskFilters);document.getElementById('plannerPreviousWeek').addEventListener('click',()=>{plannerWeekOffset--;renderPlanner()});document.getElementById('plannerNextWeek').addEventListener('click',()=>{plannerWeekOffset++;renderPlanner()});document.getElementById('cancelEditTask').addEventListener('click',()=>{resetTaskForm();setPage('tasks')});
     document.getElementById('upcomingToggle').addEventListener('click',()=>{state.upcomingCollapsed=!state.upcomingCollapsed;applyUpcomingCollapse();save()});applyUpcomingCollapse();
     document.getElementById('milestoneForm').addEventListener('submit',addMilestone);document.getElementById('challengeForm').addEventListener('submit',addMonthlyChallenge);document.getElementById('questForm').addEventListener('submit',addQuestChain);document.getElementById('customRewardForm').addEventListener('submit',addCustomReward);
     document.getElementById('milestoneType').addEventListener('change',event=>document.getElementById('milestoneCategoryField').classList.toggle('hide',event.target.value!=='category'));
