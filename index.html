@@ -445,6 +445,47 @@ body{
 @media(max-width:850px){.category-manager-list{grid-template-columns:1fr 1fr}}
 @media(max-width:580px){.category-add-grid,.category-manager-list{grid-template-columns:1fr}.category-editor{grid-template-columns:1fr}.category-editor .field.full,.category-editor-actions{grid-column:auto}.category-delete-row{grid-template-columns:1fr auto}}
 
+
+/* Task planning, search, priorities, and checklists */
+.task-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.filter-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.task-actions{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+.task-actions .btn{padding:7px 10px;font-size:10px}
+.priority-pill{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:4px 8px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.priority-pill.urgent{background:rgba(228,154,146,.18);color:#ffc2b8}
+.priority-pill.high{background:rgba(231,199,127,.15);color:#f1d493}
+.priority-pill.normal{background:rgba(101,165,141,.12);color:var(--mint)}
+.priority-pill.low{background:rgba(168,190,179,.1);color:var(--muted)}
+.deadline-chip{font-size:10px;color:var(--gold)}
+.deadline-chip.overdue{color:#f0aaa2}
+.task-extra{margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+.task-extra summary{font-size:10px;color:var(--accent2);font-weight:750;cursor:pointer}
+.task-extra-content{display:grid;gap:8px;margin-top:9px}
+.task-note{color:var(--muted);font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.subtask-list{display:grid;gap:7px}
+.subtask-row{display:flex;align-items:flex-start;gap:8px;color:var(--muted);font-size:11px;line-height:1.4}
+.subtask-row input{width:15px;height:15px;flex:0 0 auto;margin:0;accent-color:var(--accent2)}
+.subtask-row.done span{text-decoration:line-through;opacity:.6}
+.planner-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.planner-toolbar strong{font-size:13px;text-align:center}
+.planner-dayparts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.planner-part{border:1px solid var(--line);border-radius:15px;padding:13px;background:rgba(17,43,35,.46);min-width:0}
+.planner-part h3{font-size:12px;margin:0 0 10px}
+.planner-part-list{display:grid;gap:8px}
+.planner-mini-task{border:1px solid var(--line);border-radius:10px;padding:9px;background:rgba(12,35,28,.5);min-width:0}
+.planner-mini-task strong{display:block;font-size:10px;overflow-wrap:anywhere}
+.planner-mini-task small{display:block;font-size:9px;color:var(--muted);margin-top:4px}
+.planner-week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.planner-week-day{min-width:0;border:1px solid var(--line);border-radius:13px;padding:10px;background:rgba(17,43,35,.42)}
+.planner-week-day.today{border-color:rgba(101,165,141,.55);background:rgba(64,130,109,.12)}
+.planner-week-day h3{font-size:11px;margin:0 0 3px}
+.planner-week-day .planner-day-date{font-size:9px;color:var(--muted);margin-bottom:9px}
+.planner-week-task{display:block;font-size:9px;line-height:1.35;padding:6px 7px;margin-top:5px;border-radius:7px;background:rgba(101,165,141,.1);overflow-wrap:anywhere}
+.planner-week-task.high,.planner-week-task.urgent{background:rgba(231,160,127,.13)}
+.planner-empty{font-size:9px;color:var(--muted);line-height:1.4}
+@media(max-width:850px){.planner-dayparts{grid-template-columns:1fr 1fr}.planner-week-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:580px){.task-filter-grid{grid-template-columns:1fr}.filter-footer{align-items:flex-start;flex-direction:column}.task-actions{flex-wrap:wrap}.planner-toolbar{flex-wrap:wrap}.planner-toolbar strong{order:-1;width:100%}.planner-week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.planner-dayparts{grid-template-columns:1fr 1fr}.planner-part{padding:10px}}
+
 </style>
 </head>
 <body>
@@ -500,6 +541,21 @@ body{
       <div class="panel"><div class="task-list" id="categoryTasks"></div></div>
     </section>
 
+
+    <section class="page" id="page-tasks">
+      <div class="page-head"><div><div class="eyebrow">Find and organize</div><h1>Task manager</h1><p>Search, filter, edit, and prioritize all your tasks in one place.</p></div><button class="btn" data-go="create">+ New task</button></div>
+      <div class="panel task-manager-filters">
+        <div class="field"><label for="taskSearch">Search tasks</label><input id="taskSearch" type="search" placeholder="Search names and notes…" /></div>
+        <div class="task-filter-grid">
+          <div class="field"><label for="taskFilterCategory">Section</label><select id="taskFilterCategory"></select></div>
+          <div class="field"><label for="taskFilterPriority">Priority</label><select id="taskFilterPriority"><option value="">All priorities</option><option value="urgent">Urgent</option><option value="high">High</option><option value="normal">Normal</option><option value="low">Low</option></select></div>
+          <div class="field"><label for="taskFilterStatus">Status</label><select id="taskFilterStatus"><option value="">All tasks</option><option value="today">Scheduled today</option><option value="upcoming">Upcoming</option><option value="overdue">Overdue deadline</option><option value="completed">Completed today</option></select></div>
+        </div>
+        <div class="filter-footer"><span class="hint" id="taskFilterCount">Showing all tasks</span><button class="btn ghost" id="clearTaskFilters" type="button">Clear filters</button></div>
+      </div>
+      <div class="panel"><div class="task-list" id="taskManagerList"></div></div>
+    </section>
+
     <section class="page" id="page-create">
       <div class="page-head"><div><div class="eyebrow">Task builder</div><h1>Create a task</h1><p>Choose where it belongs, when it appears, and how its XP works.</p></div></div>
       <div class="panel form-panel">
@@ -511,14 +567,30 @@ body{
             <div class="field" id="dateField"><label for="taskDate">Task date</label><input id="taskDate" type="date" required /></div>
             <div class="field hide" id="startField"><label for="startDate">Start date</label><input id="startDate" type="date" /></div>
             <div class="field full hide" id="customDaysField"><label>Repeat on</label><div class="day-picks" id="dayPicks"></div></div>
+
+            <div class="field"><label for="taskPriority">Priority</label><select id="taskPriority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+            <div class="field"><label for="taskDaypart">Time of day</label><select id="taskDaypart"><option value="anytime">Anytime</option><option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="evening">Evening</option></select></div>
+            <div class="field"><label for="taskDeadline">Deadline (optional)</label><input id="taskDeadline" type="date" /><div class="hint">A deadline is separate from the scheduled day.</div></div>
+            <div class="field full"><label for="taskNotes">Task notes (optional)</label><textarea id="taskNotes" rows="2" maxlength="1000" placeholder="Add instructions, links, or details…"></textarea></div>
+            <div class="field full"><label for="taskSubtasks">Subtasks / checklist (optional)</label><textarea id="taskSubtasks" rows="3" maxlength="1400" placeholder="One step per line&#10;Read the chapter&#10;Write a short summary"></textarea><div class="hint">Each line becomes a checkable step on the task card.</div></div>
             <div class="field full"><label>XP reward type</label><div class="mode-options"><label class="mode-option"><input type="radio" name="xpMode" value="locked" checked /> Locked XP</label><label class="mode-option"><input type="radio" name="xpMode" value="variable" /> Variable XP suggestion</label></div></div>
             <div class="field" id="lockedField"><label for="lockedXP">XP reward</label><input id="lockedXP" type="number" min="1" max="10000" step="1" value="20" /></div>
             <div class="field hide" id="difficultyField"><label for="difficulty">Difficulty</label><select id="difficulty"><option value="0">Very easy · 5 XP</option><option value="1">Easy · 10 XP</option><option value="2" selected>Medium · 20 XP</option><option value="3">Hard · 35 XP</option><option value="4">Very hard · 50 XP</option></select></div>
             <div class="field hide" id="suggestedField"><label for="suggestedXP">Suggested XP (adjustable)</label><input id="suggestedXP" type="number" min="1" max="10000" step="1" value="20" /><div class="hint">The value starts with the difficulty suggestion. You can change it before saving.</div></div>
           </div>
-          <div class="form-actions"><button class="btn" type="submit">Save task</button><button class="btn ghost" type="reset" id="resetForm">Clear</button></div>
+          <input type="hidden" id="editingTaskId" value="" /><div class="form-actions"><button class="btn" id="taskSubmitButton" type="submit">Save task</button><button class="btn ghost" type="reset" id="resetForm">Clear</button><button class="btn ghost hide" id="cancelEditTask" type="button">Cancel edit</button></div>
         </form>
       </div>
+    </section>
+
+
+    <section class="page" id="page-planner">
+      <div class="page-head"><div><div class="eyebrow">Organize your time</div><h1>Planner</h1><p>Arrange your day into manageable parts and preview the week ahead.</p></div><button class="btn" data-go="create">+ Plan a task</button></div>
+      <div class="panel planner-toolbar"><button class="btn ghost" id="plannerPreviousWeek" type="button">← Previous week</button><strong id="plannerWeekLabel">This week</strong><button class="btn ghost" id="plannerNextWeek" type="button">Next week →</button></div>
+      <div class="planner-dayparts" id="dailyPlanner"></div>
+      <div class="section-row"><div><h2>Weekly plan</h2><div class="sub">A seven-day overview of your scheduled tasks</div></div></div>
+      <div class="planner-week-grid" id="weeklyPlanner"></div>
+      <div class="footer-note">Use task editing to change a task's schedule or time of day. Recurring tasks appear on each scheduled day.</div>
     </section>
 
     <section class="page" id="page-history">
@@ -740,7 +812,7 @@ body{
   let currentCategory = 'school';
   let toastTimer;
 
-  function blankState(){categories.splice(0,categories.length,...DEFAULT_CATEGORIES.map(item=>({...item})));return {tasks:[],completions:{},reviews:{},categories:categories.map(item=>({...item})),calendarGoalPercent:80,theme:'viridian',dashboardWidgets:['today','upcoming','analytics','areas'],upcomingCollapsed:false,milestones:[],monthlyChallenges:[],questChains:[],customRewards:[],purchases:[],questGoldEarned:0,notifications:{enabled:false,time:'18:00',lastSentDate:''}}}
+  function blankState(){categories.splice(0,categories.length,...DEFAULT_CATEGORIES.map(item=>({...item})));return {tasks:[],deletedTasks:[],completions:{},reviews:{},categories:categories.map(item=>({...item})),calendarGoalPercent:80,theme:'viridian',dashboardWidgets:['today','upcoming','analytics','areas'],upcomingCollapsed:false,milestones:[],monthlyChallenges:[],questChains:[],customRewards:[],purchases:[],questGoldEarned:0,notifications:{enabled:false,time:'18:00',lastSentDate:''}}}
   function sanitizeCategories(input){
     const source=Array.isArray(input)&&input.length?input:DEFAULT_CATEGORIES;
     const seenIds=new Set(),seenNames=new Set(),result=[];
@@ -755,7 +827,7 @@ body{
     }
     return result.length?result:DEFAULT_CATEGORIES.map(item=>({...item}));
   }
-  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();const base=blankState();const allowedGoals=[50,60,70,75,80,85,90,100];const goal=Number(parsed.calendarGoalPercent);const themes=Object.keys(THEME_PALETTES);categories.splice(0,categories.length,...sanitizeCategories(parsed.categories));return {...base,...parsed,tasks:parsed.tasks,completions:parsed.completions,categories:categories.map(item=>({...item})),reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{},calendarGoalPercent:allowedGoals.includes(goal)?goal:80,theme:themes.includes(parsed.theme)?parsed.theme:'viridian',dashboardWidgets:Array.isArray(parsed.dashboardWidgets)?parsed.dashboardWidgets.filter(id=>DASHBOARD_WIDGET_IDS.includes(id)):base.dashboardWidgets,milestones:Array.isArray(parsed.milestones)?parsed.milestones:[],monthlyChallenges:Array.isArray(parsed.monthlyChallenges)?parsed.monthlyChallenges:[],questChains:Array.isArray(parsed.questChains)?parsed.questChains:[],customRewards:Array.isArray(parsed.customRewards)?parsed.customRewards:[],purchases:Array.isArray(parsed.purchases)?parsed.purchases:[],questGoldEarned:Number.isFinite(Number(parsed.questGoldEarned))?Math.max(0,Number(parsed.questGoldEarned)):0,notifications:{...base.notifications,...(parsed.notifications&&typeof parsed.notifications==='object'?parsed.notifications:{})},upcomingCollapsed:parsed.upcomingCollapsed===true}}
+  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();const base=blankState();const allowedGoals=[50,60,70,75,80,85,90,100];const goal=Number(parsed.calendarGoalPercent);const themes=Object.keys(THEME_PALETTES);categories.splice(0,categories.length,...sanitizeCategories(parsed.categories));return {...base,...parsed,tasks:parsed.tasks,deletedTasks:Array.isArray(parsed.deletedTasks)?parsed.deletedTasks:[],completions:parsed.completions,categories:categories.map(item=>({...item})),reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{},calendarGoalPercent:allowedGoals.includes(goal)?goal:80,theme:themes.includes(parsed.theme)?parsed.theme:'viridian',dashboardWidgets:Array.isArray(parsed.dashboardWidgets)?parsed.dashboardWidgets.filter(id=>DASHBOARD_WIDGET_IDS.includes(id)):base.dashboardWidgets,milestones:Array.isArray(parsed.milestones)?parsed.milestones:[],monthlyChallenges:Array.isArray(parsed.monthlyChallenges)?parsed.monthlyChallenges:[],questChains:Array.isArray(parsed.questChains)?parsed.questChains:[],customRewards:Array.isArray(parsed.customRewards)?parsed.customRewards:[],purchases:Array.isArray(parsed.purchases)?parsed.purchases:[],questGoldEarned:Number.isFinite(Number(parsed.questGoldEarned))?Math.max(0,Number(parsed.questGoldEarned)):0,notifications:{...base.notifications,...(parsed.notifications&&typeof parsed.notifications==='object'?parsed.notifications:{})},upcomingCollapsed:parsed.upcomingCollapsed===true}}
   function readLocalState(key){try{const raw=localStorage.getItem(key);if(!raw)return null;return normalizeState(JSON.parse(raw))}catch(e){return null}}
   function localUserKey(userId){return `${STORAGE_KEY}::${userId}`}
   function cacheCurrentState(){try{const key=authUser?localUserKey(authUser.id):STORAGE_KEY;localStorage.setItem(key,JSON.stringify(state))}catch(e){notify('The browser cache is full. Export a backup from Settings.')}}
@@ -887,7 +959,7 @@ body{
   function notify(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2300)}
   function setPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const pageEl=document.getElementById(`page-${page}`);if(pageEl)pageEl.classList.add('active');const selector=document.getElementById('pageSelect');if(selector)selector.value=page==='category'?`cat:${currentCategory}`:page;window.scrollTo({top:0,behavior:'smooth'});if(page==='dashboard')renderDashboard();if(page==='category')renderCategory();if(page==='history')renderHistory();if(page==='weekly')renderWeeklyReview();if(page==='calendar')renderCalendar();if(page==='rewards')renderGamePage();if(page==='settings')renderSettingsEnhancements()}
   function setCategory(id){currentCategory=id;setPage('category')}
-  function buildNav(){const nav=document.getElementById('nav');const options=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.name]),['create','Create task'],['history','History'],['calendar','Calendar'],['weekly','Weekly review'],['rewards','Rewards & goals'],['settings','Settings']];nav.innerHTML=`<label class="nav-label" for="pageSelect"><span>View</span><span class="nav-select-wrap"><select id="pageSelect" class="nav-select" aria-label="Choose a Viridian page">${options.map(([id,label])=>`<option value="${id}">${escapeHTML(label)}</option>`).join('')}</select><span class="nav-select-chevron" aria-hidden="true"></span></span></label>`;const selector=nav.querySelector('#pageSelect');selector.value=document.querySelector('.page.active')?.id==='page-category'?`cat:${currentCategory}`:(document.querySelector('.page.active')?.id||'page-dashboard').replace('page-','');selector.onchange=event=>{const value=event.target.value;if(value.startsWith('cat:'))setCategory(value.slice(4));else setPage(value)}}
+  function buildNav(){const nav=document.getElementById('nav');const options=[['dashboard','Dashboard'],...categories.map(c=>[`cat:${c.id}`,c.name]),['tasks','Task manager'],['create','Create task'],['planner','Planner'],['history','History'],['calendar','Calendar'],['weekly','Weekly review'],['rewards','Rewards & goals'],['settings','Settings']];nav.innerHTML=`<label class="nav-label" for="pageSelect"><span>View</span><span class="nav-select-wrap"><select id="pageSelect" class="nav-select" aria-label="Choose a Viridian page">${options.map(([id,label])=>`<option value="${id}">${escapeHTML(label)}</option>`).join('')}</select><span class="nav-select-chevron" aria-hidden="true"></span></span></label>`;const selector=nav.querySelector('#pageSelect');selector.value=document.querySelector('.page.active')?.id==='page-category'?`cat:${currentCategory}`:(document.querySelector('.page.active')?.id||'page-dashboard').replace('page-','');selector.onchange=event=>{const value=event.target.value;if(value.startsWith('cat:'))setCategory(value.slice(4));else setPage(value)}}
   function updateTop(){document.getElementById('todayDate').textContent=dateLabel();document.getElementById('topXP').textContent=`${xpTotal().toLocaleString()} XP`}
   function taskCard(t){const completed=!!t.completion;const streak= t.repeat==='once'?null:taskStreak(t);const status=t.date<localDate()&&!completed?'Expired':completed?'Completed':'Due today';return `<div class="task-card"><button class="check-btn ${completed?'done':''}" data-toggle="${t.id}" ${t.date!==localDate()?'disabled':''} aria-label="${completed?'Undo completion':'Mark complete'}">${completed?'✓':'○'}</button><div class="task-main"><div class="task-title">${escapeHTML(t.name)}</div><div class="task-detail"><span>${escapeHTML(cat(t.category).name)}</span><span>·</span><span>${status}</span>${streak!==null?`<span>·</span><span>↗ ${streak} streak</span>`:''}</div></div><div class="reward">${completed?`+${t.completion.xp}`:`${t.xp}`} XP</div></div>`}
   function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
