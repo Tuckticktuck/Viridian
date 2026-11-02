@@ -1106,7 +1106,7 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
   }
     function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
   function bindToggles(root=document){root.querySelectorAll('[data-toggle]').forEach(btn=>btn.addEventListener('click',()=>toggleCompletion(btn.dataset.toggle,btn.dataset.date||localDate())));root.querySelectorAll('[data-edit-task]').forEach(btn=>btn.addEventListener('click',()=>openTaskEditor(btn.dataset.editTask)));root.querySelectorAll('[data-delete-task]').forEach(btn=>btn.addEventListener('click',()=>deleteTask(btn.dataset.deleteTask)));root.querySelectorAll('[data-subtask-toggle]').forEach(input=>input.addEventListener('change',()=>toggleSubtask(input.dataset.subtaskToggle,Number(input.dataset.subtaskIndex),input.checked)))}
-  function toggleCompletion(taskId,date=localDate()){const key=occurrenceKey(taskId,date);const existing=state.completions[key];if(existing){delete state.completions[key];save();renderAll();notify(`Completion undone · ${existing.xp} XP removed`);return}const task=state.tasks.find(t=>t.id===taskId);if(!task||!isScheduled(task,date)||date!==localDate())return;state.completions[key]={xp:Number(task.xp),category:task.category,taskName:task.name,completedAt:new Date().toISOString()};save();renderAll();notify(`Task completed · +${task.xp} XP`)}
+  function toggleCompletion(taskId,date=localDate()){const key=occurrenceKey(taskId,date);const existing=state.completions[key];if(existing){delete state.completions[key];state.completionDeletedAt[key]=new Date().toISOString();save();renderAll();notify(`Completion undone · ${existing.xp} XP removed`);return}const task=state.tasks.find(t=>t.id===taskId);if(!task||!isScheduled(task,date)||date!==localDate())return;state.completions[key]={xp:Number(task.xp),category:task.category,taskName:task.name,completedAt:new Date().toISOString()};save();renderAll();notify(`Task completed · +${task.xp} XP`)}
 
   function applyTheme(theme){
     const selected=THEME_PALETTES[theme]||THEME_PALETTES.viridian;
@@ -1195,14 +1195,14 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     shop.querySelectorAll('[data-buy-reward]').forEach(button=>button.addEventListener('click',()=>purchaseReward(button.dataset.buyReward)));
     const purchases=document.getElementById('purchaseList');
     purchases.innerHTML=state.purchases.length?state.purchases.slice().reverse().map(item=>`<div class="purchase-row"><div><strong>${escapeHTML(item.name)}</strong><br/><small>${prettyDate(item.date)} · ${item.cost} gold</small></div><button class="btn ghost" type="button" data-redeemed="${item.id}">${item.redeemed?'Redeemed':'Mark redeemed'}</button></div>`).join(''):'<div class="empty">Purchased rewards will appear here.</div>';
-    purchases.querySelectorAll('[data-redeemed]').forEach(button=>button.addEventListener('click',()=>{const item=state.purchases.find(p=>p.id===button.dataset.redeemed);if(item){item.redeemed=!item.redeemed;save();renderGamePage()}}));
+    purchases.querySelectorAll('[data-redeemed]').forEach(button=>button.addEventListener('click',()=>{const item=state.purchases.find(p=>p.id===button.dataset.redeemed);if(item){item.redeemed=!item.redeemed;item.updatedAt=new Date().toISOString();save();renderGamePage()}}));
     document.getElementById('milestoneCategory').innerHTML=categories.map(category=>`<option value="${category.id}">${escapeHTML(category.name)}</option>`).join('');
     if(achievementChanges)save();
   }
   function toggleQuestStep(chainId,stepId,checked){
     const chain=state.questChains.find(item=>item.id===chainId);if(!chain)return;
     const step=chain.steps.find(item=>item.id===stepId);if(!step)return;
-    step.done=!!checked;
+    step.done=!!checked;chain.updatedAt=new Date().toISOString();
     const allDone=chain.steps.length>0&&chain.steps.every(item=>item.done);
     if(allDone&&!chain.rewardClaimed){chain.rewardClaimed=true;state.questGoldEarned=(Number(state.questGoldEarned)||0)+Number(chain.rewardGold||15);notify(`Quest completed · +${chain.rewardGold} gold`)}
     save();renderGamePage();
@@ -1210,11 +1210,11 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
   function purchaseReward(rewardId){
     const reward=[...starterRewards,...state.customRewards].find(item=>item.id===rewardId);if(!reward)return;
     if(goldBalance()<reward.cost){notify('You need more gold for that reward');return}
-    state.purchases.push({id:`p_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,name:reward.name,cost:reward.cost,date:localDate(),redeemed:false});
+    state.purchases.push({id:`p_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,name:reward.name,cost:reward.cost,date:localDate(),redeemed:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
     save();renderGamePage();notify(`Reward added to your list · -${reward.cost} gold`);
   }
 
-  function saveCategories(){state.categories=categories.map(item=>({...item}));save();populateForm();buildNav();renderAll()}
+  function saveCategories(){state.categories=categories.map(item=>({...item}));state.settingsUpdatedAt=new Date().toISOString();save();populateForm();buildNav();renderAll()}
   function renderCategoryManager(){
     const list=document.getElementById('categoryManagerList');if(!list)return;
     list.innerHTML=categories.map(category=>{
@@ -1249,7 +1249,7 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     const name=read('name'),short=read('short'),icon=read('icon'),desc=read('desc');
     if(!name){notify('Section name cannot be empty');return}
     if(categories.some(item=>item.id!==id&&item.name.toLocaleLowerCase()===name.toLocaleLowerCase())){notify('A section with that name already exists');return}
-    category.name=name.slice(0,42);category.short=(short||name).slice(0,22);category.icon=(icon||'✦').slice(0,8);category.desc=desc.slice(0,140);
+    category.name=name.slice(0,42);category.short=(short||name).slice(0,22);category.icon=(icon||'✦').slice(0,8);category.desc=desc.slice(0,140);category.updatedAt=new Date().toISOString();
     saveCategories();notify('Task section updated');
   }
   function addCategory(event){
@@ -1263,7 +1263,7 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     if(categories.some(item=>item.name.toLocaleLowerCase()===name.toLocaleLowerCase())){notify('A section with that name already exists');return}
     const slug=name.toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,24)||'section';
     const id=`custom-${slug}-${Date.now().toString(36)}`;
-    categories.push({id,name:name.slice(0,42),short:(short||name).slice(0,22),icon:icon.slice(0,8),desc:desc.slice(0,140)});
+    categories.push({id,name:name.slice(0,42),short:(short||name).slice(0,22),icon:icon.slice(0,8),desc:desc.slice(0,140),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
     document.getElementById('categoryAddForm').reset();document.getElementById('newCategoryIcon').value='✦';
     saveCategories();notify('Task section added');
   }
@@ -1279,7 +1279,7 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     affected.forEach(task=>{task.category=targetId});
     Object.values(state.completions).forEach(record=>{if(record.category===id)record.category=targetId});
     (state.milestones||[]).forEach(milestone=>{if(milestone.category===id)milestone.category=targetId});
-    const index=categories.findIndex(item=>item.id===id);categories.splice(index,1);
+    state.deletedCategoryAt[id]=new Date().toISOString();const index=categories.findIndex(item=>item.id===id);categories.splice(index,1);
     if(currentCategory===id)currentCategory=targetId;
     saveCategories();notify('Task section deleted');
   }
@@ -1465,19 +1465,19 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     const task=state.tasks.find(item=>item.id===id);if(!task)return;
     if(!confirm(`Move "${task.name}" to Recently Deleted? You can restore it from Settings.`))return;
     state.deletedTasks=Array.isArray(state.deletedTasks)?state.deletedTasks:[];
-    state.deletedTasks.push({...task,deletedAt:new Date().toISOString()});
+    const deletedAt=new Date().toISOString();state.deletedTasks.push({...task,deletedAt});state.taskEvents.deleted[id]=deletedAt;
     state.tasks=state.tasks.filter(item=>item.id!==id);
     save();renderAll();notify('Task moved to Recently Deleted');
   }
   function restoreDeletedTask(id){
     const task=state.deletedTasks.find(item=>item.id===id);if(!task)return;
-    const {deletedAt,...restored}=task;state.tasks.push(restored);
+    const {deletedAt,...restored}=task;restored.updatedAt=new Date().toISOString();state.taskEvents.restored[id]=restored.updatedAt;state.tasks.push(restored);
     state.deletedTasks=state.deletedTasks.filter(item=>item.id!==id);
     save();renderAll();renderRecovery();notify('Task restored');
   }
   function permanentlyDeleteTask(id){
     if(!confirm('Permanently delete this task? This cannot be undone.'))return;
-    state.deletedTasks=state.deletedTasks.filter(item=>item.id!==id);
+    state.deletedTasks=state.deletedTasks.filter(item=>item.id!==id);state.taskEvents.permanent[id]=new Date().toISOString();
     save();renderRecovery();notify('Task permanently deleted');
   }
     
@@ -1569,7 +1569,7 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     if(repeat!=='once'&&!startDate){notify('Choose a start date');return}
     if(repeat==='custom'&&!days.length){notify('Choose at least one day');return}
     if(!Number.isFinite(xp)||xp<1||xp>10000){notify('XP must be between 1 and 10,000');return}
-    if(deadline&&deadline<localDate()){notify('Choose a deadline that is today or later');return}
+    if(deadline&&deadline>addDays(localDate(),3650)){notify('Deadline is too far in the future');return}
     const subtasks=document.getElementById('taskSubtasks').value.split('\n').map(line=>line.trim()).filter(Boolean).slice(0,20);
     const existingId=editingTaskId,task=existingId?state.tasks.find(item=>item.id===existingId):null;
     const updated={...(task||{}),id:existingId||`t_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
@@ -1588,26 +1588,26 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
   function addMilestone(event){
     event.preventDefault();const name=document.getElementById('milestoneName').value.trim(),type=document.getElementById('milestoneType').value,target=Number(document.getElementById('milestoneTarget').value),category=document.getElementById('milestoneCategory').value,rewardGold=Number(document.getElementById('milestoneRewardGold').value);
     if(!name||!Number.isInteger(target)||target<1||target>1000000||!Number.isInteger(rewardGold)||rewardGold<0||rewardGold>10000){notify('Enter a name, target, and valid gold reward');return}
-    state.milestones.push({id:`m_${Date.now()}`,name,type,target,rewardGold,rewardClaimed:false,category:type==='category'?category:''});
+    state.milestones.push({id:`m_${Date.now()}`,name,type,target,rewardGold,rewardClaimed:false,category:type==='category'?category:'',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
     document.getElementById('milestoneForm').reset();save();renderGamePage();notify('Milestone created');
   }
   function addMonthlyChallenge(event){
     event.preventDefault();const name=document.getElementById('challengeName').value.trim(),type=document.getElementById('challengeType').value,target=Number(document.getElementById('challengeTarget').value),month=localDate().slice(0,7);
     if(!name||!Number.isInteger(target)||target<1||target>100000){notify('Enter a challenge name and a valid target');return}
     state.monthlyChallenges=state.monthlyChallenges.filter(item=>item.month!==month);
-    state.monthlyChallenges.push({id:`ch_${Date.now()}`,month,name,type,target});save();renderGamePage();notify('Monthly challenge saved');
+    state.monthlyChallenges.push({id:`ch_${Date.now()}`,month,name,type,target,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});save();renderGamePage();notify('Monthly challenge saved');
   }
   function addQuestChain(event){
     event.preventDefault();const name=document.getElementById('questName').value.trim(),category=document.getElementById('questCategory').value,lines=document.getElementById('questSteps').value.split('\n').map(line=>line.trim()).filter(Boolean);
     if(!name||lines.length<2){notify('Add a quest name and at least two steps');return}
     if(lines.length>12){notify('A quest chain can have up to 12 steps');return}
-    state.questChains.push({id:`q_${Date.now()}`,name,category,steps:lines.map((title,index)=>({id:`s_${Date.now()}_${index}`,title,done:false})),rewardGold:15,rewardClaimed:false});
+    state.questChains.push({id:`q_${Date.now()}`,name,category,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),steps:lines.map((title,index)=>({id:`s_${Date.now()}_${index}`,title,done:false})),rewardGold:15,rewardClaimed:false});
     document.getElementById('questForm').reset();save();renderGamePage();notify('Quest chain created');
   }
     function addCustomReward(event){
     event.preventDefault();const name=document.getElementById('customRewardName').value.trim(),cost=Number(document.getElementById('customRewardCost').value);
     if(!name||!Number.isInteger(cost)||cost<1||cost>10000){notify('Enter a reward name and a valid gold cost');return}
-    state.customRewards.push({id:`r_${Date.now()}`,name,cost});document.getElementById('customRewardForm').reset();document.getElementById('customRewardCost').value=15;save();renderGamePage();notify('Custom reward added');
+    state.customRewards.push({id:`r_${Date.now()}`,name,cost,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});document.getElementById('customRewardForm').reset();document.getElementById('customRewardCost').value=15;save();renderGamePage();notify('Custom reward added');
   }
 
   function exportData(){state.lastBackupAt=new Date().toISOString();save();renderBackupReminder();const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),data:state},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`viridian-backup-${localDate()}.json`;a.click();URL.revokeObjectURL(url);notify('Backup exported')}
@@ -1620,14 +1620,14 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
   function init(){buildNav();populateForm();
     document.getElementById('categoryAddForm').addEventListener('submit',addCategory);
     document.getElementById('taskSearch').addEventListener('input',renderTaskManager);document.getElementById('taskFilterCategory').addEventListener('change',renderTaskManager);document.getElementById('taskFilterPriority').addEventListener('change',renderTaskManager);document.getElementById('taskFilterStatus').addEventListener('change',renderTaskManager);document.getElementById('clearTaskFilters').addEventListener('click',clearTaskFilters);document.getElementById('plannerPreviousWeek').addEventListener('click',()=>{plannerWeekOffset--;renderPlanner()});document.getElementById('plannerNextWeek').addEventListener('click',()=>{plannerWeekOffset++;renderPlanner()});document.getElementById('cancelEditTask').addEventListener('click',()=>{resetTaskForm();setPage('tasks')});
-    document.getElementById('upcomingToggle').addEventListener('click',()=>{state.upcomingCollapsed=!state.upcomingCollapsed;applyUpcomingCollapse();save()});applyUpcomingCollapse();
+    document.getElementById('upcomingToggle').addEventListener('click',()=>{state.upcomingCollapsed=!state.upcomingCollapsed;state.settingsUpdatedAt=new Date().toISOString();applyUpcomingCollapse();save()});applyUpcomingCollapse();
     document.getElementById('milestoneForm').addEventListener('submit',addMilestone);document.getElementById('customAchievementForm').addEventListener('submit',addCustomAchievement);document.getElementById('customAchievementType').addEventListener('change',event=>document.getElementById('customAchievementCategoryField').classList.toggle('hide',event.target.value!=='category'));document.getElementById('challengeForm').addEventListener('submit',addMonthlyChallenge);document.getElementById('questForm').addEventListener('submit',addQuestChain);document.getElementById('customRewardForm').addEventListener('submit',addCustomReward);
     document.getElementById('milestoneType').addEventListener('change',event=>document.getElementById('milestoneCategoryField').classList.toggle('hide',event.target.value!=='category'));
-    document.getElementById('themeSelect').addEventListener('change',event=>{state.theme=THEME_PALETTES[event.target.value]?event.target.value:'viridian';applyTheme(state.theme);save()});
-    document.querySelectorAll('[data-dashboard-setting]').forEach(input=>input.addEventListener('change',()=>{const id=input.dataset.dashboardSetting;const enabled=new Set(state.dashboardWidgets||DASHBOARD_WIDGET_IDS);if(input.checked)enabled.add(id);else enabled.delete(id);state.dashboardWidgets=[...enabled];save();applyDashboardWidgets()}));
+    document.getElementById('themeSelect').addEventListener('change',event=>{state.theme=THEME_PALETTES[event.target.value]?event.target.value:'viridian';state.settingsUpdatedAt=new Date().toISOString();applyTheme(state.theme);save()});
+    document.querySelectorAll('[data-dashboard-setting]').forEach(input=>input.addEventListener('change',()=>{const id=input.dataset.dashboardSetting;const enabled=new Set(state.dashboardWidgets||DASHBOARD_WIDGET_IDS);if(input.checked)enabled.add(id);else enabled.delete(id);state.dashboardWidgets=[...enabled];state.settingsUpdatedAt=new Date().toISOString();save();applyDashboardWidgets()}));
     document.getElementById('enableNotificationsBtn').addEventListener('click',enableBrowserNotifications);
-    document.getElementById('dailyReminderEnabled').addEventListener('change',event=>{state.notifications.enabled=event.target.checked;save();if(event.target.checked&&(!('Notification' in window)||Notification.permission!=='granted'))notify('Enable browser notifications to receive reminders')});
-    document.getElementById('dailyReminderTime').addEventListener('change',event=>{state.notifications.time=event.target.value||'18:00';save()});document.getElementById('backupReminderEnabled').addEventListener('change',event=>{state.backupReminderEnabled=event.target.checked;save();renderBackupReminder()});document.getElementById('calendarPrevious').addEventListener('click',()=>changeCalendarMonth(-1));document.getElementById('calendarNext').addEventListener('click',()=>changeCalendarMonth(1));document.getElementById('calendarToday').addEventListener('click',()=>{calendarMonth=localDate().slice(0,7);selectedCalendarDate=localDate();renderCalendar()});document.getElementById('calendarGoalPercent').addEventListener('change',event=>{const value=Number(event.target.value);if([50,60,70,75,80,85,90,100].includes(value)){state.calendarGoalPercent=value;save();renderCalendar()}});document.getElementById('previousReviewWeek').addEventListener('click',()=>{reviewWeekOffset--;renderWeeklyReview()});document.getElementById('nextReviewWeek').addEventListener('click',()=>{if(reviewWeekOffset<0){reviewWeekOffset++;renderWeeklyReview()}});document.getElementById('taskForm').addEventListener('submit',addTask);document.getElementById('repeatType').addEventListener('change',updateRepeatFields);document.querySelectorAll('input[name="xpMode"]').forEach(r=>r.addEventListener('change',updateXPFields));document.getElementById('difficulty').addEventListener('change',e=>document.getElementById('suggestedXP').value=difficultyXP[Number(e.target.value)]);document.getElementById('resetForm').addEventListener('click',()=>setTimeout(resetTaskForm,0));document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.go)));document.getElementById('exportBtn').addEventListener('click',exportData);document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('importFile').click());document.getElementById('importFile').addEventListener('change',e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value=''});document.getElementById('resetAllBtn').addEventListener('click',()=>{if(confirm('This permanently clears all tasks, completions, and XP in this browser. Have you exported a backup if you need one?')&&confirm('Are you completely sure you want to reset the tracker?')){state=blankState();currentCategory='school';populateForm();buildNav();save();renderAll();renderHistory();notify('Tracker reset')}});renderAll();initializeAuth();installKeyboardShortcuts();checkBackupReminder();applyTheme(state.theme||'viridian');updateOfflineStatus();registerOfflineApp();setInterval(checkDailyReminder,30000);window.addEventListener('online',()=>{updateOfflineStatus();if(authUser)reconnectCloudClient()});window.addEventListener('offline',()=>{updateOfflineStatus();if(authUser)setSyncStatus('Offline · saved on this device')});}
+    document.getElementById('dailyReminderEnabled').addEventListener('change',event=>{state.notifications.enabled=event.target.checked;state.notifications.updatedAt=new Date().toISOString();state.settingsUpdatedAt=new Date().toISOString();save();if(event.target.checked&&(!('Notification' in window)||Notification.permission!=='granted'))notify('Enable browser notifications to receive reminders')});
+    document.getElementById('dailyReminderTime').addEventListener('change',event=>{state.notifications.time=event.target.value||'18:00';state.notifications.updatedAt=new Date().toISOString();state.settingsUpdatedAt=new Date().toISOString();save()});document.getElementById('backupReminderEnabled').addEventListener('change',event=>{state.backupReminderEnabled=event.target.checked;state.settingsUpdatedAt=new Date().toISOString();save();renderBackupReminder()});document.getElementById('calendarPrevious').addEventListener('click',()=>changeCalendarMonth(-1));document.getElementById('calendarNext').addEventListener('click',()=>changeCalendarMonth(1));document.getElementById('calendarToday').addEventListener('click',()=>{calendarMonth=localDate().slice(0,7);selectedCalendarDate=localDate();renderCalendar()});document.getElementById('calendarGoalPercent').addEventListener('change',event=>{const value=Number(event.target.value);if([50,60,70,75,80,85,90,100].includes(value)){state.calendarGoalPercent=value;state.settingsUpdatedAt=new Date().toISOString();save();renderCalendar()}});document.getElementById('previousReviewWeek').addEventListener('click',()=>{reviewWeekOffset--;renderWeeklyReview()});document.getElementById('nextReviewWeek').addEventListener('click',()=>{if(reviewWeekOffset<0){reviewWeekOffset++;renderWeeklyReview()}});document.getElementById('taskForm').addEventListener('submit',addTask);document.getElementById('repeatType').addEventListener('change',updateRepeatFields);document.querySelectorAll('input[name="xpMode"]').forEach(r=>r.addEventListener('change',updateXPFields));document.getElementById('difficulty').addEventListener('change',e=>document.getElementById('suggestedXP').value=difficultyXP[Number(e.target.value)]);document.getElementById('resetForm').addEventListener('click',()=>setTimeout(resetTaskForm,0));document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.go)));document.getElementById('exportBtn').addEventListener('click',exportData);document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('importFile').click());document.getElementById('importFile').addEventListener('change',e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value=''});document.getElementById('resetAllBtn').addEventListener('click',()=>{if(confirm('This permanently clears all tasks, completions, and XP in this browser. Have you exported a backup if you need one?')&&confirm('Are you completely sure you want to reset the tracker?')){state=blankState();currentCategory='school';populateForm();buildNav();save();renderAll();renderHistory();notify('Tracker reset')}});renderAll();initializeAuth();installKeyboardShortcuts();checkBackupReminder();applyTheme(state.theme||'viridian');updateOfflineStatus();registerOfflineApp();setInterval(checkDailyReminder,30000);window.addEventListener('online',()=>{updateOfflineStatus();if(authUser)reconnectCloudClient()});window.addEventListener('offline',()=>{updateOfflineStatus();if(authUser)setSyncStatus('Offline · saved on this device')});}
   init();
 })();
 </script>
