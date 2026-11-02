@@ -932,7 +932,7 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
       const restoredAt=Date.parse(merged.taskEvents.restored[id]||'')||0;
       const latestTaskUpdate=timestampOf(current);
       const permanentAt=Date.parse(merged.taskEvents.permanent[id]||'')||0;
-      if(permanentAt>Math.max(deletedAt,restoredAt,latestTaskUpdate))return;
+      if(permanentAt>Math.max(deletedAt,restoredAt))return;
       if(deletedAt>Math.max(restoredAt,latestTaskUpdate)){const snapshot=!deletedSnapshot||timestampOf(current)>timestampOf(deletedSnapshot)?current:deletedSnapshot;if(snapshot)trash.push({...snapshot,deletedAt:new Date(deletedAt).toISOString()})}
       else{const snapshot=current||deletedSnapshot;if(snapshot){const {deletedAt:discard,...restored}=snapshot;active.push(restored)}}
     });
@@ -1157,6 +1157,31 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     return completedCount();
   }
   function currentMonthChallenge(){const month=localDate().slice(0,7);return (state.monthlyChallenges||[]).find(item=>item.month===month)||null}
+
+  function evaluateGamificationRewards(){
+    if(!state.achievementUnlocks||typeof state.achievementUnlocks!=='object')state.achievementUnlocks={};
+    let changed=false;
+    const total=xpTotal(),done=completedCount(),streak=overallStreak(),activeDays=new Set(Object.keys(state.completions).map(key=>key.slice(key.lastIndexOf('__')+2))).size;
+    const standard=[
+      {id:'first-task',name:'First step',earned:done>=1},
+      {id:'ten-tasks',name:'Building momentum',earned:done>=10},
+      {id:'fifty-tasks',name:'Steady progress',earned:done>=50},
+      {id:'hundred-tasks',name:'Centurion',earned:done>=100},
+      {id:'five-hundred-xp',name:'XP collector',earned:total>=500},
+      {id:'thousand-xp',name:'Leveling up',earned:total>=1000},
+      {id:'seven-streak',name:'One-week rhythm',earned:streak>=7},
+      {id:'five-active-days',name:'Regular practice',earned:activeDays>=5}
+    ];
+    standard.forEach(item=>{if(item.earned&&!state.achievementUnlocks[item.id]){state.achievementUnlocks[item.id]=new Date().toISOString();changed=true;notify(`Achievement unlocked: ${item.name}`)}});
+    (state.customAchievements||[]).forEach(item=>{
+      if(!item.unlockedAt&&customAchievementProgress(item)>=item.target){item.unlockedAt=new Date().toISOString();addGoldReward(`custom-achievement-${item.id}`,item.rewardGold,item.name);changed=true;notify(`Custom achievement unlocked: ${item.name} · +${item.rewardGold||0} gold`)}
+    });
+    (state.milestones||[]).forEach(item=>{
+      if(!item.rewardClaimed&&Number(item.rewardGold)>0&&milestoneProgress(item)>=item.target){item.rewardClaimed=true;item.updatedAt=new Date().toISOString();addGoldReward(`milestone-${item.id}`,item.rewardGold,item.name);changed=true;notify(`Milestone reached: ${item.name} · +${item.rewardGold} gold`)}
+    });
+    if(changed)save();
+  }
+
   function renderGamePage(){
     document.getElementById('gameGoldBalance').textContent=goldBalance().toLocaleString();
     document.getElementById('gameOverallLevel').textContent=levelInfo(xpTotal()).level;
@@ -1495,8 +1520,17 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
   let reviewWeekOffset=0;
   function mondayOfWeek(date){const d=parseDate(date);d.setDate(d.getDate()-((d.getDay()+6)%7));return localDate(d)}
   function selectedReviewWeek(){const start=addDays(mondayOfWeek(localDate()),reviewWeekOffset*7);const sunday=addDays(start,6);const end=reviewWeekOffset===0&&sunday>localDate()?localDate():sunday;return {start,end,sunday}}
-  function reviewEntries(start,end){const entries=[];for(const [key,done] of Object.entries(state.completions||{})){const split=key.lastIndexOf('__');if(split<1)continue;const date=key.slice(split+2);if(date<start||date>end)continue;const id=key.slice(0,split);const task=state.tasks.find(t=>t.id===id);entries.push({id,date,name:task?.name||'Past task',category:task?cat(task.category).name:'Task no longer in your list',xp:Number(done?.xp)||0})}entries.sort((a,b)=>b.date.localeCompare(a.date)||a.name.localeCompare(b.name));return entries}
-  function renderWeeklyReview(){
+  function reviewEntries(start,end){
+    const entries=[];
+    for(const [key,done] of Object.entries(state.completions||{})){
+      const split=key.lastIndexOf('__');if(split<1)continue;
+      const date=key.slice(split+2);if(date<start||date>end)continue;
+      const id=key.slice(0,split),task=state.tasks.find(t=>t.id===id)||state.deletedTasks.find(t=>t.id===id);
+      entries.push({id,date,name:task?.name||done?.taskName||'Past task',category:task?cat(task.category).name:done?.category?cat(done.category).name:'Task no longer in your list',xp:Number(done?.xp)||0});
+    }
+    entries.sort((a,b)=>b.date.localeCompare(a.date)||a.name.localeCompare(b.name));return entries;
+  }
+    function renderWeeklyReview(){
     const period=selectedReviewWeek(),entries=reviewEntries(period.start,period.end),activeDays=new Set(entries.map(entry=>entry.date)).size;
     const notes=(state.reviews||{})[period.start]||{};
     document.getElementById('reviewRange').textContent=period.start===period.end?prettyDate(period.start):`${prettyDate(period.start)} – ${prettyDate(period.end)}`;
@@ -1524,8 +1558,25 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     document.getElementById('reviewSaveStatus').textContent='Your notes save automatically to this device and your account.';
   }
 
-  function renderHistory(){const el=document.getElementById('historyList');const today=localDate();const from=addDays(today,-30);let rows=[];for(const t of state.tasks){const start=t.repeat==='once'?t.oneDate:t.startDate;const dates=scheduledDates(t,from,today).filter(d=>d<today);for(const d of dates){const key=occurrenceKey(t.id,d),done=state.completions[key];rows.push({task:t,date:d,done,xp:done?done.xp:null})}}for(const [key,done] of Object.entries(state.completions)){const split=key.lastIndexOf('__'),id=key.slice(0,split),date=key.slice(split+2);if(date===today){const t=state.tasks.find(x=>x.id===id);if(t)rows.push({task:t,date,done,xp:done.xp})}}rows.sort((a,b)=>b.date.localeCompare(a.date));rows=rows.slice(0,60);el.innerHTML=rows.length?rows.map(r=>`<div class="history-row"><div><div class="history-title">${escapeHTML(r.task.name)}</div><div class="history-meta">${escapeHTML(cat(r.task.category).name)} · ${prettyDate(r.date)}</div></div><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap"><span class="status ${r.done?'complete':'expired'}">${r.done?`Completed · +${r.xp} XP`:'Expired'}</span>${r.done?`<button class="btn ghost" style="padding:6px 9px;font-size:10px" data-toggle="${r.task.id}" data-date="${r.date}">Undo</button>`:''}</div></div>`).join(''):'<div class="empty">Your activity will appear here as you complete tasks.</div>';bindToggles(el)}
-  function populateForm(){const categorySelect=document.getElementById('taskCategory'),selected=categorySelect.value;categorySelect.innerHTML=categories.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');if(categories.some(c=>c.id===selected))categorySelect.value=selected;else if(categories.some(c=>c.id===currentCategory))categorySelect.value=currentCategory;document.getElementById('dayPicks').innerHTML=weekdays.map((d,i)=>`<label><input type="checkbox" value="${i}" ${i>=1&&i<=5?'checked':''}/>${d}</label>`).join('');const today=localDate();document.getElementById('taskDate').value=today;document.getElementById('startDate').value=today;updateRepeatFields();updateXPFields()}
+  function renderHistory(){
+    const el=document.getElementById('historyList'),today=localDate(),from=addDays(today,-30);
+    let rows=[];
+    for(const task of state.tasks){
+      const dates=scheduledDates(task,from,today).filter(date=>date<today);
+      for(const date of dates){const key=occurrenceKey(task.id,date),done=state.completions[key];rows.push({task,date,done,xp:done?done.xp:null})}
+    }
+    for(const [key,done] of Object.entries(state.completions||{})){
+      const split=key.lastIndexOf('__');if(split<1)continue;
+      const id=key.slice(0,split),date=key.slice(split+2);if(date<from||date>today)continue;
+      if(rows.some(row=>row.task.id===id&&row.date===date))continue;
+      const task=state.tasks.find(item=>item.id===id)||state.deletedTasks.find(item=>item.id===id)||{id,name:done.taskName||'Deleted task',category:done.category||categories[0].id,repeat:'once',oneDate:date};
+      rows.push({task,date,done,xp:done.xp});
+    }
+    rows.sort((a,b)=>b.date.localeCompare(a.date));rows=rows.slice(0,80);
+    el.innerHTML=rows.length?rows.map(row=>`<div class="history-row"><div><div class="history-title">${escapeHTML(row.task.name)}</div><div class="history-meta">${escapeHTML(cat(row.task.category).name)} · ${prettyDate(row.date)}</div></div><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap"><span class="status ${row.done?'complete':'expired'}">${row.done?`Completed · +${row.xp} XP`:'Expired'}</span>${row.done&&state.tasks.some(item=>item.id===row.task.id)?`<button class="btn ghost" style="padding:6px 9px;font-size:10px" data-toggle="${row.task.id}" data-date="${row.date}">Undo</button>`:''}</div></div>`).join(''):'<div class="empty">Your activity will appear here as you complete tasks.</div>';
+    bindToggles(el);
+  }
+    function populateForm(){const categorySelect=document.getElementById('taskCategory'),selected=categorySelect.value;categorySelect.innerHTML=categories.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');if(categories.some(c=>c.id===selected))categorySelect.value=selected;else if(categories.some(c=>c.id===currentCategory))categorySelect.value=currentCategory;document.getElementById('dayPicks').innerHTML=weekdays.map((d,i)=>`<label><input type="checkbox" value="${i}" ${i>=1&&i<=5?'checked':''}/>${d}</label>`).join('');const today=localDate();document.getElementById('taskDate').value=today;document.getElementById('startDate').value=today;updateRepeatFields();updateXPFields()}
   function updateRepeatFields(){const repeat=document.getElementById('repeatType').value;document.getElementById('dateField').classList.toggle('hide',repeat!=='once');document.getElementById('startField').classList.toggle('hide',repeat==='once');document.getElementById('customDaysField').classList.toggle('hide',repeat!=='custom');document.getElementById('taskDate').required=repeat==='once';document.getElementById('startDate').required=repeat!=='once'}
   function updateXPFields(){const mode=document.querySelector('input[name="xpMode"]:checked').value;const variable=mode==='variable';document.getElementById('lockedField').classList.toggle('hide',variable);document.getElementById('difficultyField').classList.toggle('hide',!variable);document.getElementById('suggestedField').classList.toggle('hide',!variable)}
   function resetTaskForm(){document.getElementById('taskForm').reset();document.getElementById('taskDate').value=localDate();document.getElementById('startDate').value=localDate();document.getElementById('suggestedXP').value=20;updateRepeatFields();updateXPFields()}
@@ -1594,7 +1645,7 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     if(task){Object.assign(task,updated);notify('Task updated')}else{state.tasks.push(updated);notify('Task created')}
     const category=updated.category;save();resetTaskForm();renderAll();setCategory(category);
   }
-    function renderAll(){renderDashboard();if(document.getElementById('page-category').classList.contains('active'))renderCategory();if(document.getElementById('page-tasks').classList.contains('active'))renderTaskManager();if(document.getElementById('page-planner').classList.contains('active'))renderPlanner();if(document.getElementById('page-history').classList.contains('active'))renderHistory();if(document.getElementById('page-weekly').classList.contains('active'))renderWeeklyReview();if(document.getElementById('page-calendar').classList.contains('active'))renderCalendar();if(document.getElementById('page-rewards').classList.contains('active'))renderGamePage();if(document.getElementById('page-settings').classList.contains('active'))renderSettingsEnhancements()}
+    function renderAll(){renderDashboard();evaluateGamificationRewards();if(document.getElementById('page-category').classList.contains('active'))renderCategory();if(document.getElementById('page-tasks').classList.contains('active'))renderTaskManager();if(document.getElementById('page-planner').classList.contains('active'))renderPlanner();if(document.getElementById('page-history').classList.contains('active'))renderHistory();if(document.getElementById('page-weekly').classList.contains('active'))renderWeeklyReview();if(document.getElementById('page-calendar').classList.contains('active'))renderCalendar();if(document.getElementById('page-rewards').classList.contains('active'))renderGamePage();if(document.getElementById('page-settings').classList.contains('active'))renderSettingsEnhancements()}
 
   function addMilestone(event){
     event.preventDefault();const name=document.getElementById('milestoneName').value.trim(),type=document.getElementById('milestoneType').value,target=Number(document.getElementById('milestoneTarget').value),category=document.getElementById('milestoneCategory').value,rewardGold=Number(document.getElementById('milestoneRewardGold').value);
