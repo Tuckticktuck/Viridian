@@ -861,7 +861,7 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
   let currentCategory = 'school';
   let toastTimer;
 
-  function blankState(){categories.splice(0,categories.length,...DEFAULT_CATEGORIES.map(item=>({...item})));return {tasks:[],deletedTasks:[],completions:{},reviews:{},categories:categories.map(item=>({...item})),calendarGoalPercent:80,theme:'viridian',dashboardWidgets:['today','upcoming','analytics','areas'],upcomingCollapsed:false,milestones:[],monthlyChallenges:[],questChains:[],customRewards:[],customAchievements:[],achievementUnlocks:{},purchases:[],questGoldEarned:0,backupReminderEnabled:true,lastBackupAt:'',notifications:{enabled:false,time:'18:00',lastSentDate:''}}}
+  function blankState(){categories.splice(0,categories.length,...DEFAULT_CATEGORIES.map(item=>({...item})));return {tasks:[],deletedTasks:[],completions:{},reviews:{},categories:categories.map(item=>({...item})),calendarGoalPercent:80,theme:'viridian',dashboardWidgets:['today','upcoming','analytics','areas'],upcomingCollapsed:false,milestones:[],monthlyChallenges:[],questChains:[],customRewards:[],customAchievements:[],achievementUnlocks:{},purchases:[],questGoldEarned:0,backupReminderEnabled:true,lastBackupAt:'',trackerCreatedAt:new Date().toISOString(),notifications:{enabled:false,time:'18:00',lastSentDate:''}}}
   function sanitizeCategories(input){
     const source=Array.isArray(input)&&input.length?input:DEFAULT_CATEGORIES;
     const seenIds=new Set(),seenNames=new Set(),result=[];
@@ -876,7 +876,7 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     }
     return result.length?result:DEFAULT_CATEGORIES.map(item=>({...item}));
   }
-  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();const base=blankState();const allowedGoals=[50,60,70,75,80,85,90,100];const goal=Number(parsed.calendarGoalPercent);const themes=Object.keys(THEME_PALETTES);categories.splice(0,categories.length,...sanitizeCategories(parsed.categories));return {...base,...parsed,tasks:parsed.tasks,deletedTasks:Array.isArray(parsed.deletedTasks)?parsed.deletedTasks:[],completions:parsed.completions,categories:categories.map(item=>({...item})),reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{},calendarGoalPercent:allowedGoals.includes(goal)?goal:80,theme:themes.includes(parsed.theme)?parsed.theme:'viridian',dashboardWidgets:Array.isArray(parsed.dashboardWidgets)?parsed.dashboardWidgets.filter(id=>DASHBOARD_WIDGET_IDS.includes(id)):base.dashboardWidgets,milestones:Array.isArray(parsed.milestones)?parsed.milestones:[],monthlyChallenges:Array.isArray(parsed.monthlyChallenges)?parsed.monthlyChallenges:[],questChains:Array.isArray(parsed.questChains)?parsed.questChains:[],customRewards:Array.isArray(parsed.customRewards)?parsed.customRewards:[],customAchievements:Array.isArray(parsed.customAchievements)?parsed.customAchievements:[],achievementUnlocks:parsed.achievementUnlocks&&typeof parsed.achievementUnlocks==='object'?parsed.achievementUnlocks:{},purchases:Array.isArray(parsed.purchases)?parsed.purchases:[],questGoldEarned:Number.isFinite(Number(parsed.questGoldEarned))?Math.max(0,Number(parsed.questGoldEarned)):0,notifications:{...base.notifications,...(parsed.notifications&&typeof parsed.notifications==='object'?parsed.notifications:{})},upcomingCollapsed:parsed.upcomingCollapsed===true,backupReminderEnabled:parsed.backupReminderEnabled!==false,lastBackupAt:typeof parsed.lastBackupAt==='string'?parsed.lastBackupAt:''}}
+  function normalizeState(parsed){if(!parsed||!Array.isArray(parsed.tasks)||!parsed.completions||typeof parsed.completions!=='object'||Array.isArray(parsed.completions))return blankState();const base=blankState();const allowedGoals=[50,60,70,75,80,85,90,100];const goal=Number(parsed.calendarGoalPercent);const themes=Object.keys(THEME_PALETTES);categories.splice(0,categories.length,...sanitizeCategories(parsed.categories));return {...base,...parsed,tasks:parsed.tasks,deletedTasks:Array.isArray(parsed.deletedTasks)?parsed.deletedTasks:[],completions:parsed.completions,categories:categories.map(item=>({...item})),reviews:parsed.reviews&&typeof parsed.reviews==='object'&&!Array.isArray(parsed.reviews)?parsed.reviews:{},calendarGoalPercent:allowedGoals.includes(goal)?goal:80,theme:themes.includes(parsed.theme)?parsed.theme:'viridian',dashboardWidgets:Array.isArray(parsed.dashboardWidgets)?parsed.dashboardWidgets.filter(id=>DASHBOARD_WIDGET_IDS.includes(id)):base.dashboardWidgets,milestones:Array.isArray(parsed.milestones)?parsed.milestones:[],monthlyChallenges:Array.isArray(parsed.monthlyChallenges)?parsed.monthlyChallenges:[],questChains:Array.isArray(parsed.questChains)?parsed.questChains:[],customRewards:Array.isArray(parsed.customRewards)?parsed.customRewards:[],customAchievements:Array.isArray(parsed.customAchievements)?parsed.customAchievements:[],achievementUnlocks:parsed.achievementUnlocks&&typeof parsed.achievementUnlocks==='object'?parsed.achievementUnlocks:{},purchases:Array.isArray(parsed.purchases)?parsed.purchases:[],questGoldEarned:Number.isFinite(Number(parsed.questGoldEarned))?Math.max(0,Number(parsed.questGoldEarned)):0,notifications:{...base.notifications,...(parsed.notifications&&typeof parsed.notifications==='object'?parsed.notifications:{})},upcomingCollapsed:parsed.upcomingCollapsed===true,backupReminderEnabled:parsed.backupReminderEnabled!==false,lastBackupAt:typeof parsed.lastBackupAt==='string'?parsed.lastBackupAt:'',trackerCreatedAt:typeof parsed.trackerCreatedAt==='string'?parsed.trackerCreatedAt:base.trackerCreatedAt}}
   function readLocalState(key){try{const raw=localStorage.getItem(key);if(!raw)return null;return normalizeState(JSON.parse(raw))}catch(e){return null}}
   function localUserKey(userId){return `${STORAGE_KEY}::${userId}`}
   function cacheCurrentState(){try{const key=authUser?localUserKey(authUser.id):STORAGE_KEY;localStorage.setItem(key,JSON.stringify(state))}catch(e){notify('The browser cache is full. Export a backup from Settings.')}}
@@ -1245,8 +1245,61 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
   }
   function clearTaskFilters(){document.getElementById('taskSearch').value='';document.getElementById('taskFilterCategory').value='';document.getElementById('taskFilterPriority').value='';document.getElementById('taskFilterStatus').value='';renderTaskManager()}
 
+
+  function customAchievementProgress(item){
+    if(item.type==='xp')return xpTotal();
+    if(item.type==='streak')return overallStreak();
+    if(item.type==='category')return categoryCompletionCount(item.category);
+    return completedCount();
+  }
+  function addCustomAchievement(event){
+    event.preventDefault();
+    const name=document.getElementById('customAchievementName').value.trim(),type=document.getElementById('customAchievementType').value,target=Number(document.getElementById('customAchievementTarget').value),rewardGold=Number(document.getElementById('customAchievementGold').value),category=document.getElementById('customAchievementCategory').value;
+    if(!name||!Number.isInteger(target)||target<1||target>1000000||!Number.isInteger(rewardGold)||rewardGold<0||rewardGold>10000){notify('Enter a name, valid target, and gold reward');return}
+    state.customAchievements.push({id:`ca_${Date.now()}`,name,type,target,rewardGold,category:type==='category'?category:'',createdAt:new Date().toISOString(),unlockedAt:''});
+    document.getElementById('customAchievementForm').reset();document.getElementById('customAchievementTarget').value=25;document.getElementById('customAchievementGold').value=10;save();renderGamePage();notify('Custom achievement created');
+  }
+  function renderRecovery(){
+    const list=document.getElementById('recoveryList');if(!list)return;
+    const rows=Array.isArray(state.deletedTasks)?state.deletedTasks.slice().reverse():[];
+    list.innerHTML=rows.length?rows.map(task=>`<div class="recovery-row"><div><strong>${escapeHTML(task.name)}</strong><small>${escapeHTML(cat(task.category).name)} · Deleted ${task.deletedAt?new Date(task.deletedAt).toLocaleDateString():'recently'}</small></div><button class="btn secondary" type="button" data-restore-task="${task.id}">Restore</button><button class="btn danger" type="button" data-permanent-delete-task="${task.id}">Delete forever</button></div>`).join(''):'<div class="empty">Recently deleted tasks will appear here. Tasks you move to Recently Deleted can be restored.</div>';
+    list.querySelectorAll('[data-restore-task]').forEach(button=>button.addEventListener('click',()=>restoreDeletedTask(button.dataset.restoreTask)));
+    list.querySelectorAll('[data-permanent-delete-task]').forEach(button=>button.addEventListener('click',()=>permanentlyDeleteTask(button.dataset.permanentDeleteTask)));
+  }
+  function checkBackupReminder(){
+    if(!state.backupReminderEnabled)return;
+    const reference=state.lastBackupAt||state.trackerCreatedAt||new Date().toISOString();
+    const age=Math.max(0,(Date.now()-Date.parse(reference))/86400000);
+    if(age<30)return;
+    const key='viridian_backup_reminder_shown_'+(authUser?.id||'local')+'_'+localDate();
+    try{if(localStorage.getItem(key))return;localStorage.setItem(key,'1')}catch(e){}
+    notify('It has been 30 days since your last backup. Consider exporting a copy in Settings.');
+  }
+  function renderBackupReminder(){
+    const checkbox=document.getElementById('backupReminderEnabled');if(!checkbox)return;
+    checkbox.checked=state.backupReminderEnabled!==false;
+    const status=document.getElementById('backupReminderStatus');
+    if(!state.lastBackupAt)status.textContent='No backup exported yet. Your first reminder will appear after 30 days.';
+    else{const days=Math.floor((Date.now()-Date.parse(state.lastBackupAt))/86400000);status.textContent=days<=0?'Last backup: today.':`Last backup: ${days} days ago.`}
+  }
+  function installKeyboardShortcuts(){
+    if(window.__viridianKeyboardShortcuts)return;
+    window.__viridianKeyboardShortcuts=true;
+    document.addEventListener('keydown',event=>{
+      const target=event.target,tag=target?.tagName?.toLowerCase(),typing=tag==='input'||tag==='textarea'||tag==='select'||target?.isContentEditable;
+      const modifier=event.ctrlKey||event.metaKey,key=event.key.toLowerCase();
+      if(modifier&&key==='k'){event.preventDefault();setPage('tasks');document.getElementById('taskSearch').focus();return}
+      if(modifier&&key==='n'){event.preventDefault();resetTaskForm();setPage('create');document.getElementById('taskName').focus();return}
+      if(modifier&&event.shiftKey&&key==='p'){event.preventDefault();setPage('planner');return}
+      if(event.key==='Escape'){
+        document.querySelectorAll('details[open]').forEach(detail=>detail.open=false);
+        if(editingTaskId&&!typing){resetTaskForm();setPage('tasks')}
+      }
+    });
+  }
+
   function renderSettingsEnhancements(){
-    renderCategoryManager();
+    renderCategoryManager();renderRecovery();renderBackupReminder();
     document.getElementById('themeSelect').value=THEME_PALETTES[state.theme]?state.theme:'viridian';
     applyTheme(state.theme);
     applyDashboardWidgets();
@@ -1255,7 +1308,7 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     document.getElementById('dailyReminderTime').value=/^([01]\d|2[0-3]):[0-5]\d$/.test(notes.time||'')?notes.time:'18:00';
     const permission=('Notification' in window)?Notification.permission:'unsupported';
     document.getElementById('notificationPermissionStatus').textContent=permission==='unsupported'?'Notifications are not supported in this browser':permission==='granted'?'Browser notifications enabled':permission==='denied'?'Notifications blocked in browser settings':'Permission not requested';
-    updateOfflineStatus();
+    updateOfflineStatus();checkBackupReminder();
   }
   function updateOfflineStatus(){
     const online=navigator.onLine;
@@ -1445,9 +1498,9 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     function renderAll(){renderDashboard();if(document.getElementById('page-category').classList.contains('active'))renderCategory();if(document.getElementById('page-tasks').classList.contains('active'))renderTaskManager();if(document.getElementById('page-planner').classList.contains('active'))renderPlanner();if(document.getElementById('page-history').classList.contains('active'))renderHistory();if(document.getElementById('page-weekly').classList.contains('active'))renderWeeklyReview();if(document.getElementById('page-calendar').classList.contains('active'))renderCalendar();if(document.getElementById('page-rewards').classList.contains('active'))renderGamePage();if(document.getElementById('page-settings').classList.contains('active'))renderSettingsEnhancements()}
 
   function addMilestone(event){
-    event.preventDefault();const name=document.getElementById('milestoneName').value.trim(),type=document.getElementById('milestoneType').value,target=Number(document.getElementById('milestoneTarget').value),category=document.getElementById('milestoneCategory').value;
-    if(!name||!Number.isInteger(target)||target<1||target>1000000){notify('Enter a milestone name and a valid target');return}
-    state.milestones.push({id:`m_${Date.now()}`,name,type,target,category:type==='category'?category:''});
+    event.preventDefault();const name=document.getElementById('milestoneName').value.trim(),type=document.getElementById('milestoneType').value,target=Number(document.getElementById('milestoneTarget').value),category=document.getElementById('milestoneCategory').value,rewardGold=Number(document.getElementById('milestoneRewardGold').value);
+    if(!name||!Number.isInteger(target)||target<1||target>1000000||!Number.isInteger(rewardGold)||rewardGold<0||rewardGold>10000){notify('Enter a name, target, and valid gold reward');return}
+    state.milestones.push({id:`m_${Date.now()}`,name,type,target,rewardGold,rewardClaimed:false,category:type==='category'?category:''});
     document.getElementById('milestoneForm').reset();save();renderGamePage();notify('Milestone created');
   }
   function addMonthlyChallenge(event){
@@ -1457,19 +1510,19 @@ kbd{font:600 10px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--
     state.monthlyChallenges.push({id:`ch_${Date.now()}`,month,name,type,target});save();renderGamePage();notify('Monthly challenge saved');
   }
   function addQuestChain(event){
-    event.preventDefault();const name=document.getElementById('questName').value.trim(),lines=document.getElementById('questSteps').value.split('\n').map(line=>line.trim()).filter(Boolean);
+    event.preventDefault();const name=document.getElementById('questName').value.trim(),category=document.getElementById('questCategory').value,lines=document.getElementById('questSteps').value.split('\n').map(line=>line.trim()).filter(Boolean);
     if(!name||lines.length<2){notify('Add a quest name and at least two steps');return}
     if(lines.length>12){notify('A quest chain can have up to 12 steps');return}
-    state.questChains.push({id:`q_${Date.now()}`,name,steps:lines.map((title,index)=>({id:`s_${Date.now()}_${index}`,title,done:false})),rewardGold:15,rewardClaimed:false});
+    state.questChains.push({id:`q_${Date.now()}`,name,category,steps:lines.map((title,index)=>({id:`s_${Date.now()}_${index}`,title,done:false})),rewardGold:15,rewardClaimed:false});
     document.getElementById('questForm').reset();save();renderGamePage();notify('Quest chain created');
   }
-  function addCustomReward(event){
+    function addCustomReward(event){
     event.preventDefault();const name=document.getElementById('customRewardName').value.trim(),cost=Number(document.getElementById('customRewardCost').value);
     if(!name||!Number.isInteger(cost)||cost<1||cost>10000){notify('Enter a reward name and a valid gold cost');return}
     state.customRewards.push({id:`r_${Date.now()}`,name,cost});document.getElementById('customRewardForm').reset();document.getElementById('customRewardCost').value=15;save();renderGamePage();notify('Custom reward added');
   }
 
-  function exportData(){const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),data:state},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`viridian-backup-${localDate()}.json`;a.click();URL.revokeObjectURL(url);notify('Backup exported')}
+  function exportData(){state.lastBackupAt=new Date().toISOString();save();renderBackupReminder();const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),data:state},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`viridian-backup-${localDate()}.json`;a.click();URL.revokeObjectURL(url);notify('Backup exported')}
   function importData(file){const reader=new FileReader();reader.onload=()=>{try{const obj=JSON.parse(reader.result);const data=obj.data||obj;if(!Array.isArray(data.tasks)||typeof data.completions!=='object'||!data.completions)throw new Error('Invalid backup');if(!confirm('Import this backup and replace the current tracker data?'))return;state=normalizeState(data);save();renderAll();notify('Backup imported')}catch(e){notify('That backup file could not be read')}};reader.readAsText(file)}
   function registerOfflineApp(){
     if(!('serviceWorker' in navigator)){updateOfflineStatus();return}
