@@ -1,5 +1,5 @@
 const CACHE_PREFIX='viridian-offline-';
-const CACHE_NAME='viridian-offline-v3';
+const CACHE_NAME='viridian-offline-v4';
 const APP_SHELL=['./','./index.html','./favicon.svg','./manifest.webmanifest','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'];
 
 self.addEventListener('install',event=>{
