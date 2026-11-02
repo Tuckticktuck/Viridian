@@ -1,12 +1,58 @@
 {
   "name": "Viridian — Personal Progress Space",
   "short_name": "Viridian",
-  "description": "A personal productivity tracker with tasks, goals, and progress.",
+  "description": "A personal productivity tracker with tasks, planning, goals and progress.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#0e241e",
   "theme_color": "#0e241e",
+  "categories": [
+    "productivity",
+    "education"
+  ],
+  "shortcuts": [
+    {
+      "name": "Create a task",
+      "short_name": "New task",
+      "description": "Open the Viridian task creator.",
+      "url": "./?page=create",
+      "icons": [
+        {
+          "src": "./favicon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Weekly planner",
+      "short_name": "Planner",
+      "description": "Open your daily and weekly planner.",
+      "url": "./?page=planner",
+      "icons": [
+        {
+          "src": "./favicon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Task manager",
+      "short_name": "Tasks",
+      "description": "Search and manage your tasks.",
+      "url": "./?page=tasks",
+      "icons": [
+        {
+          "src": "./favicon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
   "icons": [
     {
       "src": "./favicon.svg",
